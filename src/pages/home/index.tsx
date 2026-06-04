@@ -14,8 +14,8 @@ import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
 import LinearProgress from "@mui/material/LinearProgress";
 import Head from "next/head";
-import Image from "next/image";
 import { isTokenValid } from "@/utils/auth";
+import AppHeader from "@/components/AppHeader";
 
 const App = () => {
   const [options, setOptions] = useState<optionsState>({
@@ -137,13 +137,9 @@ const App = () => {
       </Head>
 
       <div className="main">
-        <div className="absolute top-1 left-0 w-full flex justify-between items-center px-10! pt-5!">
-          <div className="cursor-pointer flex items-center gap-2">
-            <Image src="/vault.svg" alt="Vault" width={28} height={28}/>
-            <span className="font-bold text-3xl text-white">Vault</span>
-          </div>
-          <div>
-            {isLoggedIn ? (
+        <AppHeader
+          rightContent={
+            isLoggedIn ? (
               <span>
                 <Link href={"/profile"} className="auth__link">
                   Account
@@ -164,17 +160,17 @@ const App = () => {
                   </Link>
                 </span>
               </>
-            )}
-          </div>
-        </div>
+            )
+          }
+        />
         <div className="container">
           <h1 className="heading-1 text">Random Password Generator</h1>
-          <h2 className="text text-2xl">
+          <h2 className="text text-lg sm:text-2xl max-w-2xl px-2!">
             Create strong and secure passwords for your accounts.
           </h2>
           <div className="password__generator__container glossy_container">
-            <div className="flex items-center">
-              <div className="input__box__container">
+            <div className="flex items-center gap-3">
+              <div className="input__box__container min-w-0 flex-1">
                 <input
                   type="text"
                   name="password"
@@ -187,19 +183,19 @@ const App = () => {
               </div>
               <RefreshIcon
                 fontSize="large"
-                className=" text-white me-4! cursor-pointer"
+                className="text-white cursor-pointer shrink-0"
                 onClick={() => generatePassword()}
               />
               <ContentCopyIcon
                 fontSize="large"
                 onClick={handleCopyPass}
-                className="text-white cursor-pointer"
+                className="text-white cursor-pointer shrink-0"
               />
             </div>
             <div id="character-sets">
               <h1 className="text text-left text-xl">Character Sets</h1>
-              <div className="flex justify-between mt-5!">
-                <div className="segmented">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5!">
+                <div className="segmented w-full">
                   <input
                     type="checkbox"
                     name="upperCase"
@@ -209,7 +205,7 @@ const App = () => {
                   />
                   <label htmlFor="upperCase">ABC</label>
                 </div>
-                <div className="segmented">
+                <div className="segmented w-full">
                   <input
                     type="checkbox"
                     name="lowerCase"
@@ -219,7 +215,7 @@ const App = () => {
                   />
                   <label htmlFor="lowerCase">abc</label>
                 </div>
-                <div className="segmented">
+                <div className="segmented w-full">
                   <input
                     type="checkbox"
                     name="numeric"
@@ -229,7 +225,7 @@ const App = () => {
                   />
                   <label htmlFor="number">123</label>
                 </div>
-                <div className="segmented">
+                <div className="segmented w-full">
                   <input
                     type="checkbox"
                     name="specialCharacter"
@@ -246,7 +242,7 @@ const App = () => {
                 Length: {""} {rangeSliderValue}
               </h1>
               <div className="pass__range__input__container">
-                <Box sx={{ width: 500 }}>
+                <Box sx={{ width: "100%" }}>
                   <Slider
                     defaultValue={15}
                     aria-label="Default"

@@ -7,7 +7,7 @@ import { useRouter } from "next/router";
 import { useToast } from "@/context/ToastContext";
 import { AxiosError } from "axios";
 import useAuthRedirect from "@/hooks/useAuthRedirect";
-import Image from "next/image";
+import AppHeader from "@/components/AppHeader";
 
 const App = () => {
   const router = useRouter();
@@ -43,15 +43,7 @@ const App = () => {
       </Head>
       {allowRender && (
         <div className="main">
-          <div className="absolute top-1 left-0 w-full flex justify-between items-center px-10! pt-5!">
-            <div
-              className="cursor-pointer flex items-center gap-2"
-              onClick={() => router.push("/home")}
-            >
-              <Image src="/vault.svg" alt="Vault" width={28} height={28} />
-              <span className="font-bold text-3xl text-white">Vault</span>
-            </div>
-          </div>
+          <AppHeader onLogoClick={() => router.push("/home")} />
           <AuthComponent mode="login" submitHandler={onSubmit} />
         </div>
       )}

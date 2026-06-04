@@ -46,7 +46,9 @@ const popupModalStyle = {
     WebkitBackdropFilter: "blur(20px)",
     border: "1px solid rgba(255,255,255,0.12)",
     boxShadow: "0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1)",
-    minWidth: "400px",
+    width: "calc(100vw - 32px)",
+    maxWidth: "440px",
+    margin: "16px",
   },
   "& .MuiDialogTitle-root": {
     color: "#f1f5f9",
@@ -94,7 +96,7 @@ const AddPassword: React.FC<AddPasswordProps> = ({
       <DialogTitle>
         {selectedCredential ? "Edit Password" : "Add Password"}
       </DialogTitle>
-      <DialogContent sx={{ paddingBottom: 0 }}>
+      <DialogContent sx={{ paddingBottom: 0, px: { xs: 2, sm: 3 } }}>
         <form onSubmit={handleSubmit(submitHandler)}>
 
           <TextField
@@ -175,12 +177,21 @@ const AddPassword: React.FC<AddPasswordProps> = ({
             sx={glassInput}
           />
 
-          <DialogActions sx={{ paddingX: 0, paddingTop: 1, paddingBottom: 2 }}>
+          <DialogActions
+            sx={{
+              paddingX: 0,
+              paddingTop: 1,
+              paddingBottom: 2,
+              gap: 1,
+              flexWrap: "wrap",
+            }}
+          >
             <Button
               onClick={handleClose}
               sx={{
                 color: "#94a3b8",
                 textTransform: "none",
+                minHeight: 44,
                 "&:hover": { color: "#f1f5f9", backgroundColor: "rgba(255,255,255,0.06)" },
               }}
             >
@@ -195,6 +206,7 @@ const AddPassword: React.FC<AddPasswordProps> = ({
                 borderRadius: "8px",
                 border: "1px solid rgba(99,149,255,0.3)",
                 paddingX: 3,
+                minHeight: 44,
                 "&:hover": {
                   backgroundColor: "rgba(99,149,255,0.3)",
                 },

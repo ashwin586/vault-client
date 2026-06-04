@@ -9,14 +9,13 @@ import axios from "@/lib/axios";
 import { useRouter } from "next/router";
 import SearchIcon from "@mui/icons-material/Search";
 import AddIcon from "@mui/icons-material/Add";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Skeleton from "@mui/material/Skeleton";
 import FileUploadIcon from "@mui/icons-material/FileUpload";
 import DownloadIcon from "@mui/icons-material/Download";
 import Papa from "papaparse";
 import useProtectedRoute from "@/hooks/useProtectedRoute";
 import Head from "next/head";
-import Image from "next/image";
+import AppHeader from "@/components/AppHeader";
 
 const App = () => {
   const [open, setOpen] = useState<boolean>(false);
@@ -186,27 +185,14 @@ const App = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <div className="main block!">
-        <div className="h-[inherit] flex flex-col">
-          <div className=" flex justify-between gap-4 mt-8! mx-4!">
-            <div>
-              <button
-                onClick={() => router.back()}
-                className="flex items-center justify-center w-10 h-10 rounded-[12px]
-             cursor-pointer border border-white/10 bg-white/5 hover:bg-white/10 
-             hover:border-white/20 text-white/60 hover:text-white transition-all duration-150"
-              >
-                <ArrowBackIcon style={{ fontSize: "20px" }} />
-              </button>
-              <div
-                className="fixed top-8 left-20 cursor-pointer flex items-center gap-2"
-                onClick={() => router.push("/home")}
-              >
-                <Image src="/vault.svg" alt="Vault" width={28} height={28} />
-                <span className="font-bold text-3xl text-white">Vault</span>
-              </div>
-            </div>
-            <div className="flex gap-4">
-              <div className="flex items-center w-[480px] gap-3 px-4! py-3! rounded-[14px] glossy_container">
+        <AppHeader
+          onBack={() => router.back()}
+          onLogoClick={() => router.push("/home")}
+        />
+        <div className="min-h-[inherit] flex flex-col w-full">
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 sm:gap-4 mx-auto! w-full max-w-7xl">
+            <div className="flex flex-col sm:flex-row gap-3 w-full min-w-0 lg:w-auto lg:flex-1 lg:max-w-2xl">
+              <div className="flex items-center w-full min-w-0 gap-3 px-4! py-3! rounded-[14px] glossy_container">
                 <SearchIcon
                   className="text-white/40 shrink-0"
                   style={{ fontSize: "22px" }}
@@ -214,7 +200,7 @@ const App = () => {
                 <input
                   type="text"
                   placeholder="Search your saved passwords..."
-                  className="bg-transparent border-none outline-none text-[#DCD7C9] w-full placeholder:text-white/30"
+                  className="bg-transparent border-none outline-none text-[#DCD7C9] w-full min-w-0 placeholder:text-white/30"
                   onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
                     setSearchQuery(e.target.value)
                   }
@@ -222,10 +208,10 @@ const App = () => {
               </div>
               <div className="my-auto! mx-0!">
                 <button
-                  className="flex items-center px-3! py-3! rounded-[14px] text-sm font-medium 
+                  className="flex items-center justify-center min-h-11 px-4! py-3! rounded-[14px] text-sm font-medium 
                text-white/80 cursor-pointer border border-white/10 bg-white/5 
                hover:bg-white/10 hover:border-white/20 hover:text-white 
-               transition-all duration-150 backdrop-blur-md"
+               transition-all duration-150 backdrop-blur-md w-full sm:w-auto"
                   id="add"
                   onClick={() => setOpen(true)}
                 >
@@ -233,8 +219,8 @@ const App = () => {
                 </button>
               </div>
             </div>
-            <div className="flex gap-2">
-              <label className="glossy_container text-1 px-5! py-2! cursor-pointer flex items-center gap-2 w-fit">
+            <div className="flex flex-col sm:flex-row gap-2 w-full lg:w-auto">
+              <label className="glossy_container text-1 px-4! sm:px-5! py-3! cursor-pointer flex items-center justify-center gap-2 w-full sm:w-fit min-h-11">
                 <DownloadIcon style={{ fontSize: "20px" }} />
                 Import CSV
                 <input
@@ -247,7 +233,7 @@ const App = () => {
                   }}
                 />
               </label>
-              <label className="glossy_container text-1 px-5! py-2! cursor-pointer flex items-center gap-2 w-fit">
+              <label className="glossy_container text-1 px-4! sm:px-5! py-3! cursor-pointer flex items-center justify-center gap-2 w-full sm:w-fit min-h-11">
                 <FileUploadIcon style={{ fontSize: "20px" }} />
                 <button className="cursor-pointer" onClick={exportCSV}>
                   Export CSV
@@ -257,14 +243,14 @@ const App = () => {
           </div>
           {credentials === null ? (
             // Loading state
-            <div className="flex flex-wrap gap-10 my-10! px-15!">
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5 lg:gap-8 my-6! sm:my-10! w-full max-w-7xl mx-auto!">
               {[...Array(10)].map((i) => (
                 <Skeleton
                   key={i}
                   variant="rectangular"
                   animation="wave"
-                  width={300}
-                  height={220}
+                  width="100%"
+                  height={190}
                   sx={{
                     borderRadius: "20px",
                     bgcolor: "rgba(255,255,255,0.07)",
@@ -274,7 +260,7 @@ const App = () => {
             </div>
           ) : credentials.length > 0 ? (
             // Cards
-            <div className="flex flex-wrap gap-10 my-10! px-15!">
+            <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-5 lg:gap-8 my-6! sm:my-10! w-full max-w-7xl mx-auto!">
               {filteredCredentials?.map((creds: UserPasswords) => (
                 <PasswordCard
                   key={creds?.id}

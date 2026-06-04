@@ -8,6 +8,7 @@ import { useToast } from "@/context/ToastContext";
 import axios from "@/lib/axios";
 import { AxiosError } from "axios";
 import { textFieldStyles } from "@/utils/muiStyles";
+import AppHeader from "@/components/AppHeader";
 
 const App = () => {
   // const [token, setToken] = useState<string | undefined>("");
@@ -85,7 +86,11 @@ const App = () => {
   return (
     <>
       <div className="main">
-        <div className="profile__main manage__acc">
+        <AppHeader
+          onBack={() => router.back()}
+          onLogoClick={() => router.push("/home")}
+        />
+        <div className="profile__main glossy_container p-5! sm:p-8!">
           <div className="user__avatar__container">
             <Image
               src="/default_profile_picture.png"

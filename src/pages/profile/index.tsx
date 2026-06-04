@@ -7,8 +7,8 @@ import { User } from "@/types/interface";
 import Image from "next/image";
 import LockIcon from "@mui/icons-material/Lock";
 import LogoutIcon from "@mui/icons-material/Logout";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Head from "next/head";
+import AppHeader from "@/components/AppHeader";
 
 const App = () => {
   const [token, setToken] = useState<string | null>(null);
@@ -65,25 +65,12 @@ const App = () => {
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <div className="main">
-        <div className="mt-8!">
-          <button
-            onClick={() => router.back()}
-            className="fixed top-4 left-4 flex items-center justify-center w-10 h-10 rounded-[12px]
-             cursor-pointer border border-white/10 bg-white/5 hover:bg-white/10 
-             hover:border-white/20 text-white/60 hover:text-white transition-all duration-150"
-          >
-            <ArrowBackIcon style={{ fontSize: "20px" }} />
-          </button>
-          <div
-            className="fixed top-4 left-20 cursor-pointer flex items-center gap-2"
-            onClick={() => router.push("/home")}
-          >
-            <Image src="/vault.svg" alt="Vault" width={28} height={28} />
-            <span className="font-bold text-3xl text-white">Vault</span>
-          </div>
-        </div>
+        <AppHeader
+          onBack={() => router.back()}
+          onLogoClick={() => router.push("/home")}
+        />
         {token && (
-          <div className="glossy_container w-full max-w-md p-8! flex flex-col items-center gap-6">
+          <div className="glossy_container w-full max-w-md mx-auto! p-5! sm:p-8! flex flex-col items-center gap-6">
             {/* Avatar */}
             <div className="relative">
               <Image
@@ -110,10 +97,10 @@ const App = () => {
             <div className="w-full h-px bg-white/10" />
 
             {/* Action Buttons */}
-            <div className="flex gap-3 w-full">
+            <div className="flex flex-col sm:flex-row gap-3 w-full">
               <button
                 onClick={() => router.push("/profile/managepasswords")}
-                className="flex-1 flex items-center justify-center gap-2 py-3! rounded-[12px]
+                className="flex-1 flex items-center justify-center gap-2 min-h-11 py-3! rounded-[12px]
                          bg-white/5 border border-white/10 text-white/70 text-sm font-medium
                          hover:bg-blue-500/15 hover:border-blue-500/30 hover:text-blue-400
                          transition-all duration-150 cursor-pointer"
@@ -124,7 +111,7 @@ const App = () => {
 
               <button
                 onClick={handleLogout}
-                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-[12px]
+                className="flex-1 flex items-center justify-center gap-2 min-h-11 py-3 rounded-[12px]
                          bg-white/5 border border-white/10 text-white/70 text-sm font-medium
                          hover:bg-red-500/15 hover:border-red-500/30 hover:text-red-400
                          transition-all duration-150 cursor-pointer"

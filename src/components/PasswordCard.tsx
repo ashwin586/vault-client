@@ -46,11 +46,11 @@ const PasswordCard: React.FC<PasswordCardProps> = React.memo(
 
     return (
       <div
-        className="glossy_container flex flex-col w-[300px] p-4! gap-3 text-1"
+        className="glossy_container flex flex-col w-full min-w-0 p-3! sm:p-4! gap-2 sm:gap-3 text-1"
         key={id}
       >
         {/* Header: favicon + name + badge */}
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           {/* Favicon or initial fallback */}
           {faviconUrl && !faviconError ? (
             <Image
@@ -58,13 +58,13 @@ const PasswordCard: React.FC<PasswordCardProps> = React.memo(
               alt={name}
               width={38}
               height={38}
-              className="shrink-0"
+              className="w-8 h-8 sm:w-[38px] sm:h-[38px] shrink-0"
               onError={() => setFaviconError(true)}
             />
           ) : (
             <div
-              className="w-[38px] h-[38px] rounded-[10px] border border-white/10 bg-white/10
-                   flex items-center justify-center text-sm font-bold shrink-0"
+              className="w-8 h-8 sm:w-[38px] sm:h-[38px] rounded-[10px] border border-white/10 bg-white/10
+                   flex items-center justify-center text-xs sm:text-sm font-bold shrink-0"
             >
               {name?.charAt(0)?.toUpperCase()}
             </div>
@@ -72,14 +72,14 @@ const PasswordCard: React.FC<PasswordCardProps> = React.memo(
 
           {/* Name + strength badge */}
           <div className="flex flex-col gap-1 min-w-0">
-            <h2 className="text-sm font-semibold truncate">{name}</h2>
+            <h2 className="text-xs sm:text-sm font-semibold truncate">{name}</h2>
             <span
               style={{
                 color: getColor,
                 backgroundColor: `${getColor}20`,
                 borderColor: `${getColor}40`,
               }}
-              className="text-[10px] font-medium px-2! py-0.5! rounded-full border w-fit"
+              className="text-[9px] sm:text-[10px] font-medium px-1.5! sm:px-2! py-0.5! rounded-full border w-fit max-w-full truncate"
             >
               {getLabel}
             </span>
@@ -90,11 +90,15 @@ const PasswordCard: React.FC<PasswordCardProps> = React.memo(
         <div className="w-full h-px bg-white/10" />
 
         {/* URL */}
-        <p className="text-xs text-white/40 truncate px-1!">{url}</p>
+        <p className="text-[11px] sm:text-xs text-white/40 truncate px-1!">
+          {url}
+        </p>
 
         {/* Username row */}
-        <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-[8px] px-3! py-2!">
-          <span className="text-sm truncate flex-1">{userName}</span>
+        <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-[8px] px-2! sm:px-3! py-1.5! sm:py-2! min-w-0">
+          <span className="text-xs sm:text-sm truncate flex-1 min-w-0">
+            {userName}
+          </span>
           <ContentCopyIcon
             onClick={() => handleCopy(userName)}
             className="cursor-pointer text-white/40 hover:text-white/80 transition-colors shrink-0"
@@ -103,11 +107,11 @@ const PasswordCard: React.FC<PasswordCardProps> = React.memo(
         </div>
 
         {/* Password row */}
-        <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-[8px] px-3! py-2!">
-          <span className="text-sm truncate flex-1 tracking-widest">
+        <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-[8px] px-2! sm:px-3! py-1.5! sm:py-2! min-w-0">
+          <span className="text-xs sm:text-sm truncate flex-1 min-w-0 tracking-wider sm:tracking-widest">
             {visibility ? password : "••••••••••"}
           </span>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {!visibility ? (
               <VisibilityIcon
                 onClick={() => setVisibility(true)}
@@ -130,9 +134,9 @@ const PasswordCard: React.FC<PasswordCardProps> = React.memo(
         </div>
 
         {/* Action Buttons */}
-        <div className="flex justify-end gap-2 pt-1!">
+        <div className="flex justify-end gap-1.5 sm:gap-2 pt-1!">
           <button
-            className="flex items-center gap-1 px-3! py-1! rounded-md text-md text-white/60
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1 min-h-9 sm:min-h-10 px-2! sm:px-3! py-1.5! sm:py-2! rounded-md text-xs sm:text-sm text-white/60
                 hover:text-blue-400 cursor-pointer border border-white/10
                 hover:border-blue-400/30 bg-white/5 hover:bg-blue-400/10
                 transition-all duration-150"
@@ -142,7 +146,7 @@ const PasswordCard: React.FC<PasswordCardProps> = React.memo(
             Edit
           </button>
           <button
-            className="flex items-center gap-1 px-3! py-1! rounded-md text-md text-white/60
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1 min-h-9 sm:min-h-10 px-2! sm:px-3! py-1.5! sm:py-2! rounded-md text-xs sm:text-sm text-white/60
                 hover:text-red-400 cursor-pointer border border-white/10
                 hover:border-red-400/30 bg-white/5 hover:bg-red-400/10
                 transition-all duration-150"
