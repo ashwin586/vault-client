@@ -3,6 +3,8 @@ import TextField from "@mui/material/TextField";
 import { useForm } from "react-hook-form";
 import { authInterface, AuthComponentProps } from "@/types/interface";
 import Link from "next/link";
+import ShieldOutlinedIcon from "@mui/icons-material/ShieldOutlined";
+import { glassInput } from "@/utils/muiStyles";
 
 const AuthComponent: React.FC<AuthComponentProps> = ({
   mode,
@@ -11,8 +13,9 @@ const AuthComponent: React.FC<AuthComponentProps> = ({
   const {
     register,
     handleSubmit,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<authInterface>();
+
   return (
     <div className="auth__container glossy_container">
       <form
@@ -20,17 +23,21 @@ const AuthComponent: React.FC<AuthComponentProps> = ({
         className="auth__form__container"
       >
         <h1 className="text-3xl font-bold">Welcome to Vault</h1>
-        {mode === "login" ? (
-          <h1 className="text-xl font-bold">Login</h1>
-        ) : (
-          <h1 className="text-xl font-bold">Register</h1>
-        )}
+        <p className="text-subtle text-sm">
+          {mode === "login"
+            ? "Sign in to access your encrypted password vault."
+            : "Create an account to securely store your passwords."}
+        </p>
+        <h2 className="text-xl font-bold">
+          {mode === "login" ? "Login" : "Register"}
+        </h2>
 
         <TextField
           id="email"
           type="text"
           label="Email"
           variant="filled"
+          fullWidth
           {...register("email", {
             required: "Email is required",
             pattern: {
@@ -39,36 +46,16 @@ const AuthComponent: React.FC<AuthComponentProps> = ({
             },
           })}
           autoComplete="off"
-          sx={{
-            mb: 2,
-            "& .MuiFilledInput-root": {
-              backgroundColor: "rgba(255,255,255,0.05)",
-              borderRadius: "8px",
-              border: "1px solid rgba(255,255,255,0.15)",
-            },
-            "& .MuiFilledInput-root:hover": {
-              backgroundColor: "rgba(255,255,255,0.08)",
-            },
-            "& .MuiFilledInput-root:before": {
-              borderBottom: "none !important",
-            },
-            "& .MuiFilledInput-root:after": {
-              borderBottom: "none !important",
-            },
-            "& .MuiInputLabel-root": {
-              color: "#cbd5e1",
-            },
-            "& input": {
-              color: "white",
-            },
-          }}
+          sx={glassInput}
         />
         {errors.email && <p className="alert__err">{errors.email.message}</p>}
+
         <TextField
           id="password"
           label="Password"
           type="password"
           variant="filled"
+          fullWidth
           {...register("password", {
             required: "Password is required",
             minLength: {
@@ -76,55 +63,39 @@ const AuthComponent: React.FC<AuthComponentProps> = ({
               message: "Password must be at least 8 characters",
             },
           })}
-          sx={{
-            mb: 2,
-            "& .MuiFilledInput-root": {
-              backgroundColor: "rgba(255,255,255,0.05)",
-              borderRadius: "8px",
-              border: "1px solid rgba(255,255,255,0.15)",
-            },
-            "& .MuiFilledInput-root:hover": {
-              backgroundColor: "rgba(255,255,255,0.08)",
-            },
-            "& .MuiFilledInput-root:before": {
-              borderBottom: "none !important",
-            },
-            "& .MuiFilledInput-root:after": {
-              borderBottom: "none !important",
-            },
-            "& .MuiInputLabel-root": {
-              color: "#cbd5e1",
-            },
-            "& input": {
-              color: "white",
-            },
-          }}
+          sx={glassInput}
         />
         {errors.password && (
           <p className="alert__err">{errors.password.message}</p>
         )}
-        {mode === "login" && (
-          <div className="text-start w-100">
-            <a href="/forgotpassword" className="text-blue-400">
-              Forgot password?
-            </a>
-          </div>
-        )}
-        <button type="submit" className="auth_btn">
-          {mode === "login" ? "Login" : "Register"}
+
+        <div className="flex items-center gap-2 text-subtle text-xs text-left">
+          <ShieldOutlinedIcon style={{ fontSize: "14px" }} />
+          <span>Credentials are encrypted in transit and at rest.</span>
+        </div>
+
+        <button type="submit" className="auth_btn" disabled={isSubmitting}>
+          {isSubmitting
+            ? mode === "login"
+              ? "Signing in..."
+              : "Creating account..."
+            : mode === "login"
+              ? "Login"
+              : "Register"}
         </button>
+
         <div>
           {mode === "login" ? (
-            <p>
+            <p className="text-subtle text-sm">
               Don&apos;t have an account?{" "}
-              <Link href="/auth/register" className="text-blue-400">
+              <Link href="/auth/register" className="auth__link">
                 Register
               </Link>
             </p>
           ) : (
-            <p>
+            <p className="text-subtle text-sm">
               Already have an account?{" "}
-              <Link href="/auth/login" className="text-blue-400">
+              <Link href="/auth/login" className="auth__link">
                 Login
               </Link>
             </p>

@@ -5,12 +5,13 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   calculateStrength,
   getStrengthColor,
   getStrengthLabel,
 } from "@/utils/passwordStrength";
+import { useToast } from "@/context/ToastContext";
 
 const getFaviconUrl = (url: string) => {
   try {
@@ -29,130 +30,172 @@ const PasswordCard: React.FC<PasswordCardProps> = React.memo(
     url,
     userName,
     password,
+    maskByDefault = true,
+    clipboardClearSeconds = 30,
     handleEditButton,
     handleDeleteButton,
   }) => {
-    const [visibility, setVisibility] = useState<boolean>(false);
+    const [visibility, setVisibility] = useState<boolean>(() => !maskByDefault);
     const [faviconError, setFaviconError] = useState(false);
+    const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const clipboardTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const { showToast } = useToast();
 
     const faviconUrl = getFaviconUrl(url);
     const passwordStrength = calculateStrength(password);
-    const getColor = getStrengthColor(passwordStrength);
-    const getLabel = getStrengthLabel(passwordStrength);
+    const strengthColor = getStrengthColor(passwordStrength);
+    const strengthLabel = getStrengthLabel(passwordStrength);
 
-    const handleCopy = (text: string) => {
-      navigator.clipboard.writeText(text);
+    useEffect(() => {
+      setVisibility(!maskByDefault);
+    }, [maskByDefault, id]);
+
+    useEffect(() => {
+      return () => {
+        if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+        if (clipboardTimerRef.current) clearTimeout(clipboardTimerRef.current);
+      };
+    }, []);
+
+    const scheduleHide = () => {
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+      hideTimerRef.current = setTimeout(() => {
+        setVisibility(false);
+      }, clipboardClearSeconds * 1000);
+    };
+
+    const handleCopy = async (text: string, label: string) => {
+      await navigator.clipboard.writeText(text);
+      showToast(`${label} copied to clipboard`, "success");
+
+      if (clipboardTimerRef.current) clearTimeout(clipboardTimerRef.current);
+      clipboardTimerRef.current = setTimeout(async () => {
+        try {
+          const current = await navigator.clipboard.readText();
+          if (current === text) {
+            await navigator.clipboard.writeText("");
+          }
+        } catch {
+          // Clipboard permissions may block read/clear in some browsers.
+        }
+      }, clipboardClearSeconds * 1000);
+    };
+
+    const revealPassword = () => {
+      setVisibility(true);
+      scheduleHide();
+    };
+
+    const hidePassword = () => {
+      setVisibility(false);
+      if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
     };
 
     return (
-      <div
-        className="glossy_container flex flex-col w-full min-w-0 p-3! sm:p-4! gap-2 sm:gap-3 text-1"
-        key={id}
-      >
-        {/* Header: favicon + name + badge */}
-        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-          {/* Favicon or initial fallback */}
+      <div className="password-card glossy_container" key={id}>
+        <div className="password-card__header">
           {faviconUrl && !faviconError ? (
             <Image
               src={faviconUrl}
               alt={name}
-              width={38}
-              height={38}
-              className="w-8 h-8 sm:w-[38px] sm:h-[38px] shrink-0"
+              width={40}
+              height={40}
+              className="password-card__avatar"
               onError={() => setFaviconError(true)}
             />
           ) : (
-            <div
-              className="w-8 h-8 sm:w-[38px] sm:h-[38px] rounded-[10px] border border-white/10 bg-white/10
-                   flex items-center justify-center text-xs sm:text-sm font-bold shrink-0"
-            >
+            <div className="password-card__avatar password-card__avatar--fallback">
               {name?.charAt(0)?.toUpperCase()}
             </div>
           )}
 
-          {/* Name + strength badge */}
-          <div className="flex flex-col gap-1 min-w-0">
-            <h2 className="text-xs sm:text-sm font-semibold truncate">{name}</h2>
+          <div className="password-card__title-group">
+            <h2 className="password-card__title" title={name}>
+              {name}
+            </h2>
             <span
               style={{
-                color: getColor,
-                backgroundColor: `${getColor}20`,
-                borderColor: `${getColor}40`,
+                color: strengthColor,
+                backgroundColor: `${strengthColor}20`,
+                borderColor: `${strengthColor}40`,
               }}
-              className="text-[9px] sm:text-[10px] font-medium px-1.5! sm:px-2! py-0.5! rounded-full border w-fit max-w-full truncate"
+              className="password-card__strength"
             >
-              {getLabel}
+              {strengthLabel}
             </span>
           </div>
         </div>
 
-        {/* Divider */}
-        <div className="w-full h-px bg-white/10" />
+        <div className="password-card__divider" />
 
-        {/* URL */}
-        <p className="text-[11px] sm:text-xs text-white/40 truncate px-1!">
+        <p className="password-card__url" title={url}>
           {url}
         </p>
 
-        {/* Username row */}
-        <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-[8px] px-2! sm:px-3! py-1.5! sm:py-2! min-w-0">
-          <span className="text-xs sm:text-sm truncate flex-1 min-w-0">
+        <div className="password-card__field">
+          <span className="password-card__field-value" title={userName}>
             {userName}
           </span>
-          <ContentCopyIcon
-            onClick={() => handleCopy(userName)}
-            className="cursor-pointer text-white/40 hover:text-white/80 transition-colors shrink-0"
-            style={{ fontSize: "16px" }}
-          />
+          <button
+            type="button"
+            onClick={() => handleCopy(userName, "Username")}
+            className="btn-icon btn-icon-sm password-card__field-action"
+            aria-label="Copy username"
+          >
+            <ContentCopyIcon style={{ fontSize: "16px" }} />
+          </button>
         </div>
 
-        {/* Password row */}
-        <div className="flex items-center justify-between bg-white/5 border border-white/10 rounded-[8px] px-2! sm:px-3! py-1.5! sm:py-2! min-w-0">
-          <span className="text-xs sm:text-sm truncate flex-1 min-w-0 tracking-wider sm:tracking-widest">
+        <div className="password-card__field">
+          <span className="password-card__field-value password-card__field-value--secret">
             {visibility ? password : "••••••••••"}
           </span>
-          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <div className="password-card__field-actions">
             {!visibility ? (
-              <VisibilityIcon
-                onClick={() => setVisibility(true)}
-                className="cursor-pointer text-white/40 hover:text-white/80 transition-colors"
-                style={{ fontSize: "16px" }}
-              />
+              <button
+                type="button"
+                onClick={revealPassword}
+                className="btn-icon btn-icon-sm password-card__field-action"
+                aria-label="Show password"
+              >
+                <VisibilityIcon style={{ fontSize: "16px" }} />
+              </button>
             ) : (
-              <VisibilityOffIcon
-                onClick={() => setVisibility(false)}
-                className="cursor-pointer text-white/40 hover:text-white/80 transition-colors"
-                style={{ fontSize: "16px" }}
-              />
+              <button
+                type="button"
+                onClick={hidePassword}
+                className="btn-icon btn-icon-sm password-card__field-action"
+                aria-label="Hide password"
+              >
+                <VisibilityOffIcon style={{ fontSize: "16px" }} />
+              </button>
             )}
-            <ContentCopyIcon
-              onClick={() => handleCopy(password)}
-              className="cursor-pointer text-white/40 hover:text-white/80 transition-colors"
-              style={{ fontSize: "16px" }}
-            />
+            <button
+              type="button"
+              onClick={() => handleCopy(password, "Password")}
+              className="btn-icon btn-icon-sm password-card__field-action"
+              aria-label="Copy password"
+            >
+              <ContentCopyIcon style={{ fontSize: "16px" }} />
+            </button>
           </div>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex justify-end gap-1.5 sm:gap-2 pt-1!">
+        <div className="password-card__actions">
           <button
-            className="flex-1 sm:flex-none flex items-center justify-center gap-1 min-h-9 sm:min-h-10 px-2! sm:px-3! py-1.5! sm:py-2! rounded-md text-xs sm:text-sm text-white/60
-                hover:text-blue-400 cursor-pointer border border-white/10
-                hover:border-blue-400/30 bg-white/5 hover:bg-blue-400/10
-                transition-all duration-150"
+            type="button"
+            className="btn-vault-edit"
             onClick={handleEditButton}
           >
-            <EditIcon style={{ fontSize: "13px" }} />
+            <EditIcon style={{ fontSize: "14px" }} />
             Edit
           </button>
           <button
-            className="flex-1 sm:flex-none flex items-center justify-center gap-1 min-h-9 sm:min-h-10 px-2! sm:px-3! py-1.5! sm:py-2! rounded-md text-xs sm:text-sm text-white/60
-                hover:text-red-400 cursor-pointer border border-white/10
-                hover:border-red-400/30 bg-white/5 hover:bg-red-400/10
-                transition-all duration-150"
+            type="button"
+            className="btn-vault-delete"
             onClick={handleDeleteButton}
           >
-            <DeleteIcon style={{ fontSize: "13px" }} />
+            <DeleteIcon style={{ fontSize: "14px" }} />
             Delete
           </button>
         </div>

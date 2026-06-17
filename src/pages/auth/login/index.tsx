@@ -2,17 +2,18 @@ import { SubmitHandler } from "react-hook-form";
 import { authInterface } from "@/types/interface";
 import AuthComponent from "@/components/AuthComponent";
 import axios from "@/lib/axios";
-import Head from "next/head";
 import { useRouter } from "next/router";
 import { useToast } from "@/context/ToastContext";
 import { AxiosError } from "axios";
 import useAuthRedirect from "@/hooks/useAuthRedirect";
-import AppHeader from "@/components/AppHeader";
+import { unlockVaultSession } from "@/hooks/useVaultSessionLock";
+import AppLayout from "@/components/layout/AppLayout";
+import PageLoader from "@/components/layout/PageLoader";
 
 const App = () => {
   const router = useRouter();
   const { showToast } = useToast();
-  const allowRender = useAuthRedirect();
+  const { allowRender, isChecking } = useAuthRedirect();
 
   const onSubmit: SubmitHandler<authInterface> = async (data) => {
     try {
@@ -21,6 +22,7 @@ const App = () => {
         const accessToken = response?.data?.token;
         const message: string = response?.data?.message;
         localStorage.setItem("access-token", accessToken);
+        unlockVaultSession();
         showToast(message, "success");
         setTimeout(() => {
           router.push("/home");
@@ -33,21 +35,26 @@ const App = () => {
     }
   };
 
+  if (isChecking) {
+    return (
+      <AppLayout title="Login — Vault" contentVariant="centered" showFooter={false}>
+        <PageLoader />
+      </AppLayout>
+    );
+  }
+
+  if (!allowRender) return null;
+
   return (
-    <>
-      <Head>
-        <title>Login - Valut</title>
-        <meta name="description" content="Login to your Vault account" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-      {allowRender && (
-        <div className="main">
-          <AppHeader onLogoClick={() => router.push("/home")} />
-          <AuthComponent mode="login" submitHandler={onSubmit} />
-        </div>
-      )}
-    </>
+    <AppLayout
+      title="Login — Vault"
+      description="Login to your Vault account"
+      contentVariant="centered"
+      showBack
+      onBack={() => router.push("/home")}
+    >
+      <AuthComponent mode="login" submitHandler={onSubmit} />
+    </AppLayout>
   );
 };
 

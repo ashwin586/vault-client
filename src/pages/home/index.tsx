@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from "react";
-import Link from "next/link";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
+import ShieldOutlinedIcon from "@mui/icons-material/ShieldOutlined";
 import {
   APLHABETS,
   NUMBERS,
@@ -10,12 +10,16 @@ import {
 } from "@/utils/constants";
 import Box from "@mui/material/Box";
 import Slider from "@mui/material/Slider";
-import Snackbar from "@mui/material/Snackbar";
-import Alert from "@mui/material/Alert";
 import LinearProgress from "@mui/material/LinearProgress";
-import Head from "next/head";
+import AppLayout from "@/components/layout/AppLayout";
+import { useToast } from "@/context/ToastContext";
+import {
+  calculateStrengthFromOptions,
+  getStrengthColor,
+} from "@/utils/passwordStrength";
+import { linearProgressStyle, sliderStyle } from "@/utils/muiStyles";
 import { isTokenValid } from "@/utils/auth";
-import AppHeader from "@/components/AppHeader";
+import useUserSettings from "@/hooks/useUserSettings";
 
 const App = () => {
   const [options, setOptions] = useState<optionsState>({
@@ -25,12 +29,16 @@ const App = () => {
     specialChar: false,
   });
   const [password, setPassword] = useState<string>("");
-  const [rangeSliderValue, setRangeSliderValue] = useState<number[] | number>(
-    15,
-  );
+  const [rangeSliderValue, setRangeSliderValue] = useState<number[] | number>(15);
+  const [settingsLocked, setSettingsLocked] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const passTextRef = useRef<HTMLInputElement | null>(null);
-  const [toast, setToast] = useState<boolean>(false);
-  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
+  const { showToast } = useToast();
+  const { settings, isLoaded } = useUserSettings(isAuthenticated);
+
+  useEffect(() => {
+    setIsAuthenticated(isTokenValid());
+  }, []);
 
   const alphabets: string[] = APLHABETS.split("");
   const numbers: string[] = NUMBERS.split("");
@@ -45,6 +53,14 @@ const App = () => {
   if (options.specialChar) allChars = allChars.concat(specialChar);
 
   const generatePassword = () => {
+    if (allChars.length === 0) {
+      showToast(
+        "At least one password generation rule must remain enabled.",
+        "warning",
+      );
+      return;
+    }
+
     const length =
       typeof rangeSliderValue === "number"
         ? rangeSliderValue
@@ -59,6 +75,11 @@ const App = () => {
   };
 
   const handleCheckBox = (option: keyof optionsState) => {
+    if (settingsLocked) {
+      showToast("Character sets are managed in Settings.", "info");
+      return;
+    }
+
     const newState = {
       ...options,
       [option]: !options[option],
@@ -67,6 +88,10 @@ const App = () => {
     const checkedCount = Object.values(newState).filter(Boolean).length;
 
     if (checkedCount === 0) {
+      showToast(
+        "At least one password generation rule must remain enabled.",
+        "warning",
+      );
       return;
     }
 
@@ -74,8 +99,25 @@ const App = () => {
   };
 
   useEffect(() => {
-    generatePassword();
+    if (!isAuthenticated) {
+      setSettingsLocked(false);
+      return;
+    }
 
+    if (!isLoaded) return;
+
+    setOptions({
+      upperCase: settings.generatorUppercase,
+      lowerCase: settings.generatorLowercase,
+      number: settings.generatorNumbers,
+      specialChar: settings.generatorSymbols,
+    });
+    setRangeSliderValue(settings.generatorLength);
+    setSettingsLocked(true);
+  }, [isAuthenticated, isLoaded, settings]);
+
+  useEffect(() => {
+    generatePassword();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     options.lowerCase,
@@ -88,208 +130,146 @@ const App = () => {
   const handleCopyPass = async () => {
     if (passTextRef.current) {
       await navigator.clipboard.writeText(passTextRef.current.value);
-      setToast(true);
+      showToast("Password copied to clipboard", "success");
     }
   };
 
-  const handleClose = () => {
-    setToast(false);
-  };
+  const strength = calculateStrengthFromOptions(password, options);
+  const strengthColor = getStrengthColor(strength);
 
-  const calculateStrength = (password: string) => {
-    let size = 0;
-
-    if (options.lowerCase) size += 26;
-    if (options.upperCase) size += 26;
-    if (options.number) size += 10;
-    if (options.specialChar) size += 32;
-
-    const score = password.length * Math.log2(size);
-
-    if (score < 40) return Number(score);
-    if (score < 60) return Number(score);
-    if (score < 80) return Number(score);
-    if (score > 100) return 100;
-  };
-
-  const strength = calculateStrength(password);
-
-  const getColor = (strength: number) => {
-    if (strength < 40) return "#ef4444";
-    if (strength < 70) return "#f59e0b";
-    return "#22c55e";
-  };
-
-  useEffect(() => {
-    setIsLoggedIn(isTokenValid());
-  }, []);
+  const characterSets: Array<{
+    id: keyof optionsState;
+    label: string;
+    htmlId: string;
+  }> = [
+    { id: "upperCase", label: "ABC", htmlId: "upperCase" },
+    { id: "lowerCase", label: "abc", htmlId: "lowerCase" },
+    { id: "number", label: "123", htmlId: "number" },
+    { id: "specialChar", label: "!@#", htmlId: "specialChar" },
+  ];
 
   return (
-    <React.Fragment>
-      <Head>
-        <title>Vault - Password Generator</title>
-        <meta
-          name="description"
-          content="Generate strong and secure passwords instantly"
-        />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
+    <AppLayout
+      title="Vault — Password Generator"
+      description="Generate strong and secure passwords instantly"
+      contentVariant="centered"
+    >
+      <div className="container">
+        <h1 className="heading-1 text">Random Password Generator</h1>
+        <h2 className="text text-lg sm:text-2xl max-w-2xl px-2">
+          Create strong, unique passwords for every account. Generated locally in
+          your browser.
+        </h2>
 
-      <div className="main">
-        <AppHeader
-          rightContent={
-            isLoggedIn ? (
-              <span>
-                <Link href={"/profile"} className="auth__link">
-                  Account
-                </Link>
-              </span>
-            ) : (
-              <>
-                <span>
-                  {" "}
-                  <Link className="auth__link" href={"/auth/login"}>
-                    Login
-                  </Link>
-                </span>{" "}
-                /{" "}
-                <span>
-                  <Link className="auth__link" href={"/auth/register"}>
-                    Register
-                  </Link>
-                </span>
-              </>
-            )
-          }
-        />
-        <div className="container">
-          <h1 className="heading-1 text">Random Password Generator</h1>
-          <h2 className="text text-lg sm:text-2xl max-w-2xl px-2!">
-            Create strong and secure passwords for your accounts.
-          </h2>
-          <div className="password__generator__container glossy_container">
-            <div className="flex items-center gap-3">
-              <div className="input__box__container min-w-0 flex-1">
-                <input
-                  type="text"
-                  name="password"
-                  id="password"
-                  className="input__box"
-                  value={password}
-                  readOnly
-                  ref={passTextRef}
-                />
-              </div>
-              <RefreshIcon
-                fontSize="large"
-                className="text-white cursor-pointer shrink-0"
-                onClick={() => generatePassword()}
-              />
-              <ContentCopyIcon
-                fontSize="large"
-                onClick={handleCopyPass}
-                className="text-white cursor-pointer shrink-0"
+        <div className="flex items-center gap-2 text-subtle text-sm max-w-lg">
+          <ShieldOutlinedIcon style={{ fontSize: "16px" }} />
+          <span>Your passwords are never stored unless you save them to your vault.</span>
+        </div>
+
+        <div className="password__generator__container glossy_container">
+          <div className="flex items-center gap-3">
+            <div className="input__box__container min-w-0 flex-1">
+              <input
+                type="text"
+                name="password"
+                id="password"
+                className="input__box"
+                value={password}
+                readOnly
+                ref={passTextRef}
+                aria-label="Generated password"
               />
             </div>
-            <div id="character-sets">
-              <h1 className="text text-left text-xl">Character Sets</h1>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5!">
-                <div className="segmented w-full">
-                  <input
-                    type="checkbox"
-                    name="upperCase"
-                    id="upperCase"
-                    checked={options.upperCase}
-                    onChange={() => handleCheckBox("upperCase")}
-                  />
-                  <label htmlFor="upperCase">ABC</label>
-                </div>
-                <div className="segmented w-full">
-                  <input
-                    type="checkbox"
-                    name="lowerCase"
-                    id="lowerCase"
-                    checked={options.lowerCase}
-                    onChange={() => handleCheckBox("lowerCase")}
-                  />
-                  <label htmlFor="lowerCase">abc</label>
-                </div>
-                <div className="segmented w-full">
-                  <input
-                    type="checkbox"
-                    name="numeric"
-                    id="number"
-                    checked={options.number}
-                    onChange={() => handleCheckBox("number")}
-                  />
-                  <label htmlFor="number">123</label>
-                </div>
-                <div className="segmented w-full">
-                  <input
-                    type="checkbox"
-                    name="specialCharacter"
-                    id="specialChar"
-                    checked={options.specialChar}
-                    onChange={() => handleCheckBox("specialChar")}
-                  />
-                  <label htmlFor="specialChar">!@#</label>
-                </div>
-              </div>
+            <button
+              type="button"
+              onClick={() => generatePassword()}
+              className="btn-icon btn-icon-sm shrink-0"
+              aria-label="Regenerate password"
+            >
+              <RefreshIcon style={{ fontSize: "20px" }} />
+            </button>
+            <button
+              type="button"
+              onClick={handleCopyPass}
+              className="btn-icon btn-icon-sm shrink-0"
+              aria-label="Copy password to clipboard"
+            >
+              <ContentCopyIcon style={{ fontSize: "20px" }} />
+            </button>
+          </div>
+
+          <div id="character-sets">
+            <div className="generator-section-header">
+              <h2 className="text text-left text-xl">Character Sets</h2>
+              {settingsLocked && (
+                <span className="generator-managed-hint mb-2!">Managed in Settings</span>
+              )}
             </div>
-            <div id="password-length">
-              <h1 className="text text-left text-xl">
-                Length: {""} {rangeSliderValue}
-              </h1>
-              <div className="pass__range__input__container">
-                <Box sx={{ width: "100%" }}>
-                  <Slider
-                    defaultValue={15}
-                    aria-label="Default"
-                    valueLabelDisplay="auto"
-                    min={1}
-                    max={50}
-                    onChange={(_, value) => {
-                      setRangeSliderValue(value);
-                    }}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-5">
+              {characterSets.map((set) => (
+                <div
+                  className={`segmented w-full ${settingsLocked ? "segmented--locked" : ""}`}
+                  key={set.id}
+                >
+                  <input
+                    type="checkbox"
+                    name={set.id}
+                    id={set.htmlId}
+                    checked={options[set.id]}
+                    disabled={settingsLocked}
+                    onChange={() => handleCheckBox(set.id)}
                   />
-                </Box>
-              </div>
+                  <label htmlFor={set.htmlId}>{set.label}</label>
+                </div>
+              ))}
             </div>
-            <div id="password-strength-meter" className="">
-              <p className="text text-start text-xl">Password Strength</p>
-              <Box sx={{ width: "100%", mt: 1 }}>
-                <LinearProgress
-                  variant="determinate"
-                  value={strength}
-                  sx={{
-                    height: 8,
-                    borderRadius: 5,
-                    backgroundColor: "#1e293b",
-                    "& .MuiLinearProgress-bar": {
-                      borderRadius: 5,
-                      background: `${getColor(strength || 0)}`,
-                    },
+          </div>
+
+          <div id="password-length">
+            <div className="generator-section-header">
+              <h2 className="text text-left text-xl">
+                Length: {rangeSliderValue}
+              </h2>
+              {settingsLocked && (
+                <span className="generator-managed-hint">Managed in Settings</span>
+              )}
+            </div>
+            <div className="pass__range__input__container">
+              <Box sx={{ width: "100%" }}>
+                <Slider
+                  aria-label="Password length"
+                  valueLabelDisplay="auto"
+                  min={8}
+                  max={50}
+                  disabled={settingsLocked}
+                  value={
+                    typeof rangeSliderValue === "number"
+                      ? rangeSliderValue
+                      : rangeSliderValue[0]
+                  }
+                  onChange={(_, value) => {
+                    if (settingsLocked) return;
+                    setRangeSliderValue(value);
                   }}
+                  sx={sliderStyle}
                 />
               </Box>
             </div>
           </div>
+
+          <div id="password-strength-meter">
+            <p className="text text-start text-xl">Password Strength</p>
+            <Box sx={{ width: "100%", mt: 1 }}>
+              <LinearProgress
+                variant="determinate"
+                value={strength}
+                sx={linearProgressStyle(strengthColor)}
+              />
+            </Box>
+          </div>
         </div>
       </div>
-      <Snackbar open={toast} autoHideDuration={3000} onClose={handleClose}>
-        <Alert
-          onClose={handleClose}
-          severity="success"
-          variant="filled"
-          sx={{
-            width: "100%",
-          }}
-        >
-          Password copied to clipboard
-        </Alert>
-      </Snackbar>
-    </React.Fragment>
+    </AppLayout>
   );
 };
 

@@ -5,6 +5,7 @@ import { isTokenValid } from "@/utils/auth";
 const useAuthRedirect = () => {
   const router = useRouter();
   const [allowRender, setAllowRender] = useState(false);
+  const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
     if (isTokenValid()) {
@@ -13,9 +14,10 @@ const useAuthRedirect = () => {
       localStorage.removeItem("access-token");
       setAllowRender(true);
     }
+    setIsChecking(false);
   }, [router]);
 
-  return allowRender;
+  return { allowRender, isChecking };
 };
 
 export default useAuthRedirect;

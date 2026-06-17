@@ -7,59 +7,12 @@ import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
 import { addPassword, AddPasswordProps } from "@/types/interface";
-
-const glassInput = {
-  mb: 2,
-  "& .MuiFilledInput-root": {
-    backgroundColor: "rgba(255,255,255,0.05)",
-    borderRadius: "8px",
-    border: "1px solid rgba(255,255,255,0.15)",
-  },
-  "& .MuiFilledInput-root:hover": {
-    backgroundColor: "rgba(255,255,255,0.08)",
-  },
-  "& .MuiFilledInput-root:before": {
-    borderBottom: "none !important",
-  },
-  "& .MuiFilledInput-root:after": {
-    borderBottom: "none !important",
-  },
-  "& .MuiInputLabel-root": {
-    color: "#cbd5e1",
-  },
-  "& .MuiInputLabel-root.Mui-focused": {
-    color: "#93b4ff",
-  },
-  "& input": {
-    color: "white",
-  },
-  "& .MuiFormHelperText-root": {
-    color: "#f87171",
-  },
-};
-
-const popupModalStyle = {
-  "& .MuiPaper-root": {
-    borderRadius: "16px",
-    backgroundColor: "rgba(15, 23, 42, 0.75)",
-    backdropFilter: "blur(20px)",
-    WebkitBackdropFilter: "blur(20px)",
-    border: "1px solid rgba(255,255,255,0.12)",
-    boxShadow: "0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.1)",
-    width: "calc(100vw - 32px)",
-    maxWidth: "440px",
-    margin: "16px",
-  },
-  "& .MuiDialogTitle-root": {
-    color: "#f1f5f9",
-    fontWeight: 600,
-    paddingBottom: "8px",
-  },
-  "& .MuiBackdrop-root": {
-    backgroundColor: "rgba(0,0,0,0.6)",
-    backdropFilter: "blur(4px)",
-  },
-};
+import {
+  dialogStyle,
+  dialogCancelButton,
+  dialogPrimaryButton,
+  glassInput,
+} from "@/utils/muiStyles";
 
 const AddPassword: React.FC<AddPasswordProps> = ({
   open,
@@ -71,7 +24,7 @@ const AddPassword: React.FC<AddPasswordProps> = ({
     handleSubmit,
     register,
     reset,
-    formState: { errors },
+    formState: { errors, isSubmitting },
   } = useForm<addPassword>({
     defaultValues: {
       name: selectedCredential?.name || "",
@@ -92,13 +45,13 @@ const AddPassword: React.FC<AddPasswordProps> = ({
   }, [open]);
 
   return (
-    <Dialog open={open} onClose={handleClose} sx={popupModalStyle}>
+    <Dialog open={open} onClose={handleClose} sx={dialogStyle}>
       <DialogTitle>
         {selectedCredential ? "Edit Password" : "Add Password"}
       </DialogTitle>
-      <DialogContent sx={{ paddingBottom: 0, px: { xs: 2, sm: 3 } }}>
-        <form onSubmit={handleSubmit(submitHandler)}>
-
+      <DialogContent sx={{ paddingBottom: 0, px: { xs: 2, sm: 3 }, pt: 1 }}>
+        <form className="vault-form" onSubmit={handleSubmit(submitHandler)}>
+          <div className="vault-form__fields">
           <TextField
             autoFocus
             margin="dense"
@@ -111,7 +64,7 @@ const AddPassword: React.FC<AddPasswordProps> = ({
               required: "App Name is required",
               minLength: {
                 value: 1,
-                message: "Atleast one character is required.",
+                message: "At least one character is required.",
               },
             })}
             error={!!errors.name}
@@ -176,8 +129,10 @@ const AddPassword: React.FC<AddPasswordProps> = ({
             helperText={errors.password?.message}
             sx={glassInput}
           />
+          </div>
 
           <DialogActions
+            className="vault-form__actions"
             sx={{
               paddingX: 0,
               paddingTop: 1,
@@ -186,33 +141,19 @@ const AddPassword: React.FC<AddPasswordProps> = ({
               flexWrap: "wrap",
             }}
           >
-            <Button
-              onClick={handleClose}
-              sx={{
-                color: "#94a3b8",
-                textTransform: "none",
-                minHeight: 44,
-                "&:hover": { color: "#f1f5f9", backgroundColor: "rgba(255,255,255,0.06)" },
-              }}
-            >
+            <Button onClick={handleClose} sx={dialogCancelButton}>
               Cancel
             </Button>
             <Button
               type="submit"
-              sx={{
-                backgroundColor: "rgba(99,149,255,0.2)",
-                color: "#6395ff",
-                textTransform: "none",
-                borderRadius: "8px",
-                border: "1px solid rgba(99,149,255,0.3)",
-                paddingX: 3,
-                minHeight: 44,
-                "&:hover": {
-                  backgroundColor: "rgba(99,149,255,0.3)",
-                },
-              }}
+              disabled={isSubmitting}
+              sx={dialogPrimaryButton}
             >
-              {selectedCredential ? "Update" : "Add"}
+              {isSubmitting
+                ? "Saving..."
+                : selectedCredential
+                  ? "Update"
+                  : "Add"}
             </Button>
           </DialogActions>
         </form>

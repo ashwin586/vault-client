@@ -1,29 +1,36 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import axios from "@/lib/axios";
 import { useRouter } from "next/router";
 import { AxiosError } from "axios";
 import { useToast } from "@/context/ToastContext";
 import { User } from "@/types/interface";
-import Image from "next/image";
 import LockIcon from "@mui/icons-material/Lock";
+import SettingsIcon from "@mui/icons-material/Settings";
 import LogoutIcon from "@mui/icons-material/Logout";
-import Head from "next/head";
-import AppHeader from "@/components/AppHeader";
+import ShieldOutlinedIcon from "@mui/icons-material/ShieldOutlined";
+import VerifiedUserOutlinedIcon from "@mui/icons-material/VerifiedUserOutlined";
+import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
+import AppLayout from "@/components/layout/AppLayout";
+import PageLoader from "@/components/layout/PageLoader";
+import UserAvatar from "@/components/ui/UserAvatar";
+import Skeleton from "@mui/material/Skeleton";
+import { skeletonStyle } from "@/utils/muiStyles";
+import { isTokenValid } from "@/utils/auth";
 
 const App = () => {
-  const [token, setToken] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const router = useRouter();
   const { showToast } = useToast();
 
   useEffect(() => {
-    const accessToken = localStorage.getItem("access-token");
-    if (!accessToken) {
+    if (!isTokenValid()) {
       router.push("/home");
       return;
     }
+    setIsAuthenticated(true);
 
-    setToken(accessToken);
     const fetchProfile = async () => {
       try {
         const response = await axios.get("/profile");
@@ -43,7 +50,11 @@ const App = () => {
           const message = error?.response?.data?.message;
           showToast(message, "error");
           router.push("/home");
+        } else {
+          showToast("Failed to load profile", "error");
         }
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -56,74 +67,180 @@ const App = () => {
     router.push("/home");
   };
 
-  return (
-    <>
-      <Head>
-        <title>Profile — Vault</title>
-        <meta name="description" content="Manage your Vault account" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link rel="icon" href="/favicon.ico" />
-      </Head>
-      <div className="main">
-        <AppHeader
-          onBack={() => router.back()}
-          onLogoClick={() => router.push("/home")}
-        />
-        {token && (
-          <div className="glossy_container w-full max-w-md mx-auto! p-5! sm:p-8! flex flex-col items-center gap-6">
-            {/* Avatar */}
-            <div className="relative">
-              <Image
-                src="/default_profile_picture.png"
-                alt="Profile picture"
-                width={90}
-                height={90}
-                className="rounded-full border-2 border-white/15"
-              />
-            </div>
+  if (!isAuthenticated) {
+    return (
+      <AppLayout title="Profile — Vault" contentVariant="centered" showFooter={false}>
+        <PageLoader />
+      </AppLayout>
+    );
+  }
 
-            {/* User Info */}
-            <div className="text-center flex flex-col gap-1">
-              <h1 className="text-2xl font-extrabold capitalize text-1">
-                {user?.name}
-              </h1>
-              <p className="text-sm text-white/50">{user?.email}</p>
-              <p className="text-xs text-white/30">
-                Member since {user?.createdAt}
+  return (
+    <AppLayout
+      title="Profile — Vault"
+      description="Manage your Vault account"
+      contentVariant="centered"
+      showBack
+      onBack={() => router.push("/home")}
+    >
+      <div className="account-page">
+        <section className="glossy_container account-shell flex flex-col gap-6">
+          <div className="account-header">
+            <div className="account-header__copy">
+              <span className="account-kicker">Account Overview</span>
+              <h1 className="account-title">Your Vault profile</h1>
+              <p className="account-description">
+                Review your account status and jump into your vault or security
+                settings.
               </p>
             </div>
+            <span className="status-badge status-badge--success">
+              <VerifiedUserOutlinedIcon style={{ fontSize: "16px" }} />
+              Protected
+            </span>
+          </div>
 
-            {/* Divider */}
-            <div className="w-full h-px bg-white/10" />
+          {isLoading ? (
+            <div className="flex flex-col items-center gap-4">
+              <Skeleton variant="circular" width={90} height={90} sx={skeletonStyle} />
+              <div className="w-full flex flex-col gap-2 items-center">
+                <Skeleton variant="text" width="60%" height={32} sx={skeletonStyle} />
+                <Skeleton variant="text" width="80%" height={20} sx={skeletonStyle} />
+                <Skeleton variant="text" width="50%" height={16} sx={skeletonStyle} />
+              </div>
+            </div>
+          ) : (
+            <div className="flex flex-col sm:flex-row items-center sm:items-start gap-5">
+              <UserAvatar name={user?.name} size={92} />
 
-            {/* Action Buttons */}
-            <div className="flex flex-col sm:flex-row gap-3 w-full">
+              <div className="text-center sm:text-left flex flex-col gap-2 min-w-0">
+                <h2 className="text-2xl font-extrabold capitalize text">
+                  {user?.name}
+                </h2>
+                <p className="text-sm text-white/50 break-all">{user?.email}</p>
+                <div className="flex flex-wrap justify-center sm:justify-start gap-2 mt-1">
+                  <span className="status-badge status-badge--info">
+                    Member since {user?.createdAt}
+                  </span>
+                  <span className="status-badge status-badge--success">
+                    Encryption active
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="settings-meta-grid">
+            <div className="settings-meta-card">
+              <p className="settings-meta-card__label">Account status</p>
+              <p className="settings-meta-card__value">Protected</p>
+            </div>
+            <div className="settings-meta-card">
+              <p className="settings-meta-card__label">Security posture</p>
+              <p className="settings-meta-card__value">Healthy</p>
+            </div>
+            <div className="settings-meta-card">
+              <p className="settings-meta-card__label">Last activity</p>
+              <p className="settings-meta-card__value">Current session</p>
+            </div>
+          </div>
+        </section>
+
+        <section className="settings-grid settings-grid--single">
+          <div className="glossy_container settings-card">
+            <div className="settings-card__header">
+              <div className="settings-card__title-group">
+                <h2 className="settings-card__title">Quick actions</h2>
+                <p className="settings-card__description">
+                  Manage saved credentials, account preferences, and active
+                  sessions from one place.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <button
+                type="button"
                 onClick={() => router.push("/profile/managepasswords")}
-                className="flex-1 flex items-center justify-center gap-2 min-h-11 py-3! rounded-[12px]
-                         bg-white/5 border border-white/10 text-white/70 text-sm font-medium
-                         hover:bg-blue-500/15 hover:border-blue-500/30 hover:text-blue-400
-                         transition-all duration-150 cursor-pointer"
+                className="settings-row text-left cursor-pointer"
               >
-                <LockIcon style={{ fontSize: "18px" }} />
-                Open Vault
+                <div className="settings-row__content">
+                  <span className="settings-row__title flex items-center gap-2">
+                    <LockIcon style={{ fontSize: "18px" }} />
+                    Open Vault
+                  </span>
+                  <span className="settings-row__description">
+                    View and manage saved credentials.
+                  </span>
+                </div>
               </button>
 
               <button
-                onClick={handleLogout}
-                className="flex-1 flex items-center justify-center gap-2 min-h-11 py-3 rounded-[12px]
-                         bg-white/5 border border-white/10 text-white/70 text-sm font-medium
-                         hover:bg-red-500/15 hover:border-red-500/30 hover:text-red-400
-                         transition-all duration-150 cursor-pointer"
+                type="button"
+                onClick={() => router.push("/profile/manageaccount")}
+                className="settings-row text-left cursor-pointer"
               >
-                <LogoutIcon style={{ fontSize: "18px" }} />
-                Logout
+                <div className="settings-row__content">
+                  <span className="settings-row__title flex items-center gap-2">
+                    <SettingsIcon style={{ fontSize: "18px" }} />
+                    Manage Account
+                  </span>
+                  <span className="settings-row__description">
+                    Update profile, privacy, and security preferences.
+                  </span>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="settings-row text-left cursor-pointer"
+              >
+                <div className="settings-row__content">
+                  <span className="settings-row__title flex items-center gap-2 text-red-300">
+                    <LogoutIcon style={{ fontSize: "18px" }} />
+                    Logout
+                  </span>
+                  <span className="settings-row__description">
+                    End this browser session.
+                  </span>
+                </div>
               </button>
             </div>
           </div>
-        )}
+        </section>
+
+        <section className="glossy_container settings-card">
+          <div className="settings-card__header">
+            <div className="settings-card__title-group">
+              <h2 className="settings-card__title">Security summary</h2>
+              <p className="settings-card__description">
+                Vault protects your saved credentials with encrypted transport,
+                masked fields, and session-based access.
+              </p>
+            </div>
+            <ShieldOutlinedIcon className="text-white/30" />
+          </div>
+          <div className="activity-list">
+            <div className="activity-item">
+              <span className="activity-dot" />
+              <span>Account access is protected by your current sign-in token.</span>
+            </div>
+            <div className="activity-item">
+              <span className="activity-dot" />
+              <span>Sensitive vault entries remain masked until manually revealed.</span>
+            </div>
+            <div className="activity-item">
+              <span className="activity-dot" />
+              <span className="flex items-center gap-2">
+                <HistoryOutlinedIcon style={{ fontSize: "16px" }} />
+                Last review: today
+              </span>
+            </div>
+          </div>
+        </section>
       </div>
-    </>
+    </AppLayout>
   );
 };
 

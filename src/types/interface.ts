@@ -59,8 +59,8 @@ export interface User {
 export interface ProfileInfo {
   name: string;
   email: string;
-  currentPassword: string;
-  newPassword: string;
+  currentPassword?: string;
+  newPassword?: string;
 }
 
 export interface ApiError {
@@ -90,6 +90,55 @@ export interface PasswordCardProps {
   url: string;
   userName: string;
   password: string;
+  maskByDefault?: boolean;
+  clipboardClearSeconds?: number;
   handleEditButton: () => void;
   handleDeleteButton: () => void;
+}
+
+export interface UserSettings {
+  autoLockTimeout: number;
+  clipboardTimer: number;
+  maskSensitiveData: boolean;
+  securityReminders: boolean;
+  lockOnClose: boolean;
+  themePreference: string;
+  notifications: boolean;
+  generatorLength: number;
+  generatorSymbols: boolean;
+  generatorNumbers: boolean;
+  generatorUppercase: boolean;
+  generatorLowercase: boolean;
+  language: string;
+}
+
+export interface SecurityMetadata {
+  lastLoginAt: string | null;
+  previousLoginAt: string | null;
+  lastPasswordUpdatedAt: string | null;
+  loginCount: number;
+}
+
+export interface ActivityItem {
+  type: string;
+  message: string;
+  createdAt: string;
+}
+
+export interface SecuritySummary {
+  accountStatus: string;
+  encryptionStatus: string;
+  passwordHealthScore: number | null;
+  savedPasswordCount: number;
+  weakPasswordCount: number;
+  reusedPasswordCount: number;
+  maskingEnabled: boolean;
+}
+
+export interface ProfileResponseUser extends User {
+  settings?: UserSettings;
+  securityMetadata?: SecurityMetadata;
+  activeSessions?: number;
+  activity?: ActivityItem[];
+  securitySummary?: SecuritySummary;
 }
