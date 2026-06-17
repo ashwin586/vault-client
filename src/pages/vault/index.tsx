@@ -21,9 +21,10 @@ import useProtectedRoute from "@/hooks/useProtectedRoute";
 import useUserSettings from "@/hooks/useUserSettings";
 import useVaultSessionLock from "@/hooks/useVaultSessionLock";
 import AppLayout from "@/components/layout/AppLayout";
-import PageLoader from "@/components/layout/PageLoader";
+import VaultPageSkeleton from "@/components/layout/VaultPageSkeleton";
 import { skeletonStyle } from "@/utils/muiStyles";
 import { calculateStrength } from "@/utils/passwordStrength";
+import { ROUTES } from "@/utils/routes";
 
 const App = () => {
   const [open, setOpen] = useState<boolean>(false);
@@ -237,8 +238,8 @@ const App = () => {
 
   if (isChecking || !allowRender) {
     return (
-      <AppLayout title="My Vault — Vault" contentVariant="wide" showFooter={false}>
-        <PageLoader />
+      <AppLayout title="Vault — Vault" contentVariant="wide" showFooter={false}>
+        <VaultPageSkeleton />
       </AppLayout>
     );
   }
@@ -249,11 +250,11 @@ const App = () => {
 
   return (
     <AppLayout
-      title="My Vault — Vault"
+      title="Vault — Vault"
       description="Manage your saved passwords"
       contentVariant="wide"
       showBack
-      onBack={() => router.push("/profile")}
+      onBack={() => router.push(ROUTES.profile)}
     >
       <div className="flex flex-col w-full gap-6">
         <section className="glossy_container vault-toolbar-card flex flex-col gap-5">

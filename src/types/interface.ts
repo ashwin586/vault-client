@@ -13,12 +13,6 @@ export interface addPassword {
   password: string;
 }
 
-export interface inputProps {
-  label: string;
-  id: string;
-  defaultValue: string;
-}
-
 export interface AuthComponentProps {
   mode: string;
   submitHandler: SubmitHandler<authInterface>;
@@ -29,12 +23,6 @@ export interface AddPasswordProps {
   handleClose: () => void;
   submitHandler: SubmitHandler<addPassword>;
   selectedCredential?: addPassword | null
-}
-
-export interface ProfileComponentProps {
-  heading: string;
-  description: string;
-  onClick?: () => void;
 }
 
 export interface TokenProps {
@@ -135,7 +123,8 @@ export interface SecuritySummary {
   maskingEnabled: boolean;
 }
 
-export interface ProfileResponseUser extends User {
+export interface ProfileResponseUser extends Omit<User, "createdAt"> {
+  createdAt?: string | Date;
   settings?: UserSettings;
   securityMetadata?: SecurityMetadata;
   activeSessions?: number;

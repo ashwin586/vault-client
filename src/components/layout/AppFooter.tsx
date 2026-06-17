@@ -3,16 +3,17 @@ import Link from "next/link";
 import React from "react";
 import GitHubIcon from "@mui/icons-material/GitHub";
 import EmailIcon from "@mui/icons-material/Email";
+import { ROUTES } from "@/utils/routes";
 
 const APP_VERSION = "0.1.0";
 
 const footerLinks = [
-  { href: "/home", label: "Home" },
-  { href: "/home", label: "Password Generator" },
-  { href: "/profile/managepasswords", label: "Vault" },
-  { href: "/profile/manageaccount", label: "Settings" },
-  { href: "/privacy", label: "Privacy" },
-  { href: "/contact", label: "Contact" },
+  { href: ROUTES.home, label: "Home" },
+  { href: ROUTES.home, label: "Password Generator" },
+  { href: ROUTES.vault, label: "Vault" },
+  { href: ROUTES.settings, label: "Settings" },
+  { href: ROUTES.privacy, label: "Privacy" },
+  { href: ROUTES.contact, label: "Contact" },
 ];
 
 const AppFooter: React.FC = () => {

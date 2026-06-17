@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/router";
 import React, { useEffect, useState } from "react";
 import { isTokenValid } from "@/utils/auth";
+import { ROUTES } from "@/utils/routes";
 
 interface AppNavbarProps {
   showBack?: boolean;
@@ -13,10 +14,10 @@ interface AppNavbarProps {
 }
 
 const navLinks = [
-  { href: "/home", label: "Generator", auth: false },
-  { href: "/profile/managepasswords", label: "Vault", auth: true },
-  { href: "/profile/manageaccount", label: "Settings", auth: true },
-  { href: "/profile", label: "Account", auth: true },
+  { href: ROUTES.home, label: "Generator", auth: false },
+  { href: ROUTES.vault, label: "Vault", auth: true },
+  { href: ROUTES.settings, label: "Settings", auth: true },
+  { href: ROUTES.profile, label: "Account", auth: true },
 ];
 
 const AppNavbar: React.FC<AppNavbarProps> = ({ showBack, onBack }) => {
@@ -61,7 +62,7 @@ const AppNavbar: React.FC<AppNavbarProps> = ({ showBack, onBack }) => {
               <ArrowBackIcon style={{ fontSize: "20px" }} />
             </button>
           )}
-          <Link href="/home" className="app-navbar__brand">
+          <Link href={ROUTES.home} className="app-navbar__brand">
             <Image src="/vault.svg" alt="" width={28} height={28} aria-hidden />
             <span className="app-navbar__title">Vault</span>
           </Link>
@@ -87,10 +88,10 @@ const AppNavbar: React.FC<AppNavbarProps> = ({ showBack, onBack }) => {
         <div className="app-navbar__actions">
           {!isLoggedIn ? (
             <div className="app-navbar__auth">
-              <Link href="/auth/login" className="btn-ghost btn-sm">
+              <Link href={ROUTES.login} className="btn-ghost btn-sm">
                 Login
               </Link>
-              <Link href="/auth/register" className="btn-primary btn-sm">
+              <Link href={ROUTES.register} className="btn-primary btn-sm">
                 Register
               </Link>
             </div>
@@ -131,13 +132,13 @@ const AppNavbar: React.FC<AppNavbarProps> = ({ showBack, onBack }) => {
               {!isLoggedIn && (
                 <>
                   <li>
-                    <Link href="/auth/login" className="app-navbar__mobile-link">
+                    <Link href={ROUTES.login} className="app-navbar__mobile-link">
                       Login
                     </Link>
                   </li>
                   <li>
                     <Link
-                      href="/auth/register"
+                      href={ROUTES.register}
                       className="app-navbar__mobile-link app-navbar__mobile-link--primary"
                     >
                       Register

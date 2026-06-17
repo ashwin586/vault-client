@@ -150,7 +150,7 @@ const App = () => {
 
   return (
     <AppLayout
-      title="Vault — Password Generator"
+      title="Password Generator — Vault"
       description="Generate strong and secure passwords instantly"
       contentVariant="centered"
     >

@@ -45,6 +45,8 @@ import {
   getStrengthColor,
   getStrengthLabel,
 } from "@/utils/passwordStrength";
+import { ROUTES } from "@/utils/routes";
+import { formatDateTime } from "@/utils/formatDateTime";
 
 const App = () => {
   const [isEdit, setIsEdit] = useState<boolean>(false);
@@ -62,8 +64,6 @@ const App = () => {
   const [maskSensitiveData, setMaskSensitiveData] = useState(true);
   const [securityReminders, setSecurityReminders] = useState(true);
   const [lockOnClose, setLockOnClose] = useState(true);
-  const [themePreference, setThemePreference] = useState("System default");
-  const [notifications, setNotifications] = useState(true);
   const [generatorLength, setGeneratorLength] = useState(18);
   const [generatorSymbols, setGeneratorSymbols] = useState(true);
   const [generatorNumbers, setGeneratorNumbers] = useState(true);
@@ -89,16 +89,6 @@ const App = () => {
   );
   const passwordStrengthColor = getStrengthColor(passwordStrength);
   const passwordStrengthLabel = getStrengthLabel(passwordStrength);
-  const formatDateTime = (value?: string | Date | null) => {
-    if (!value) return "Unknown";
-    return new Date(value).toLocaleString("en-IN", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-      hour: "numeric",
-      minute: "2-digit",
-    });
-  };
   const lastLogin = useMemo(
     () => formatDateTime(securityMetadata?.lastLoginAt),
     [securityMetadata],
@@ -129,8 +119,6 @@ const App = () => {
           setMaskSensitiveData(settings.maskSensitiveData ?? true);
           setSecurityReminders(settings.securityReminders ?? true);
           setLockOnClose(settings.lockOnClose ?? true);
-          setThemePreference(settings.themePreference ?? "System default");
-          setNotifications(settings.notifications ?? true);
           setGeneratorLength(settings.generatorLength ?? 18);
           setGeneratorSymbols(settings.generatorSymbols ?? true);
           setGeneratorNumbers(settings.generatorNumbers ?? true);
@@ -215,8 +203,6 @@ const App = () => {
         maskSensitiveData,
         securityReminders,
         lockOnClose,
-        themePreference,
-        notifications,
         generatorLength,
         generatorSymbols,
         generatorNumbers,
@@ -276,7 +262,7 @@ const App = () => {
   if (isChecking || !allowRender) {
     return (
       <AppLayout title="Settings — Vault" contentVariant="centered" showFooter={false}>
-        <PageLoader />
+        <PageLoader label="Loading settings" />
       </AppLayout>
     );
   }
@@ -287,7 +273,7 @@ const App = () => {
       description="Manage your account settings"
       contentVariant="wide"
       showBack
-      onBack={() => router.push("/profile")}
+      onBack={() => router.push(ROUTES.profile)}
     >
       <div className="account-page">
         <section className="glossy_container account-shell flex flex-col gap-6">
@@ -813,8 +799,7 @@ const App = () => {
             <div className="settings-card__title-group">
               <h2 className="settings-card__title">Preferences</h2>
               <p className="settings-card__description">
-                Tasteful defaults for the interface, generator, and optional
-                alerts.
+                Defaults for the password generator and interface appearance.
               </p>
             </div>
             <PaletteOutlinedIcon className="text-white/30" />
@@ -823,21 +808,12 @@ const App = () => {
           <div className="settings-stack">
             <div className="settings-row">
               <div className="settings-row__content">
-                <span className="settings-row__title">Theme preference</span>
+                <span className="settings-row__title">Appearance</span>
                 <span className="settings-row__description">
-                  The current design remains the default.
+                  Vault currently uses the default dark theme.
                 </span>
               </div>
-              <select
-                value={themePreference}
-                onChange={(event) => setThemePreference(event.target.value)}
-                className="settings-theme-select"
-                aria-label="Theme preference"
-              >
-                <option>System default</option>
-                <option>Dark</option>
-                <option>Light</option>
-              </select>
+              <span className="status-badge">Dark theme</span>
             </div>
             <div className="settings-row">
               <div className="settings-row__content">
@@ -893,19 +869,6 @@ const App = () => {
                   />
                 </div>
               ))}
-            </div>
-            <div className="settings-row">
-              <div className="settings-row__content">
-                <span className="settings-row__title">Notification preferences</span>
-                <span className="settings-row__description">
-                  Receive product and security nudges inside Vault.
-                </span>
-              </div>
-              <Switch
-                checked={notifications}
-                onChange={(event) => setNotifications(event.target.checked)}
-                sx={switchStyle}
-              />
             </div>
             <div className="settings-row">
               <div className="settings-row__content">
