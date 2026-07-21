@@ -6,6 +6,10 @@ import Link from "next/link";
 import ShieldOutlinedIcon from "@mui/icons-material/ShieldOutlined";
 import { glassInput } from "@/utils/muiStyles";
 
+type AuthFormValues = authInterface & {
+  acknowledgeUnrecoverable?: boolean;
+};
+
 const AuthComponent: React.FC<AuthComponentProps> = ({
   mode,
   submitHandler,
@@ -14,19 +18,24 @@ const AuthComponent: React.FC<AuthComponentProps> = ({
     register,
     handleSubmit,
     formState: { errors, isSubmitting },
-  } = useForm<authInterface>();
+  } = useForm<AuthFormValues>();
+
+  const onSubmit = (data: AuthFormValues) => {
+    const { email, password } = data;
+    return submitHandler({ email, password });
+  };
 
   return (
     <div className="auth__container glossy_container">
       <form
-        onSubmit={handleSubmit(submitHandler)}
+        onSubmit={handleSubmit(onSubmit)}
         className="auth__form__container"
       >
         <h1 className="text-3xl font-bold">Welcome to Vault</h1>
         <p className="text-subtle text-sm">
           {mode === "login"
-            ? "Sign in to access your encrypted password vault."
-            : "Create an account to securely store your passwords."}
+            ? "Sign in to unlock your encrypted password vault."
+            : "Create an account and choose a master password for your vault."}
         </p>
         <h2 className="text-xl font-bold">
           {mode === "login" ? "Login" : "Register"}
@@ -52,15 +61,15 @@ const AuthComponent: React.FC<AuthComponentProps> = ({
 
         <TextField
           id="password"
-          label="Password"
+          label="Master password"
           type="password"
           variant="filled"
           fullWidth
           {...register("password", {
-            required: "Password is required",
+            required: "Master password is required",
             minLength: {
               value: 8,
-              message: "Password must be at least 8 characters",
+              message: "Master password must be at least 8 characters",
             },
           })}
           sx={glassInput}
@@ -69,9 +78,52 @@ const AuthComponent: React.FC<AuthComponentProps> = ({
           <p className="alert__err">{errors.password.message}</p>
         )}
 
+        {mode === "register" && (
+          <div className="auth__recovery-notice">
+            <p className="auth__recovery-notice__title">
+              Your master password cannot be recovered
+            </p>
+            <p className="auth__recovery-notice__body">
+              Vault encrypts your data with a key derived from this password.
+              If you forget it, you will permanently lose access to your vault.
+              We cannot reset it or recover your data for you.
+            </p>
+            <label className="auth__acknowledge">
+              <input
+                type="checkbox"
+                {...register("acknowledgeUnrecoverable", {
+                  required:
+                    "You must acknowledge that the master password cannot be recovered",
+                })}
+              />
+              <span>
+                I understand that my master password cannot be recovered, and
+                forgetting it means permanent loss of vault access.
+              </span>
+            </label>
+            {errors.acknowledgeUnrecoverable && (
+              <p className="alert__err">
+                {errors.acknowledgeUnrecoverable.message}
+              </p>
+            )}
+          </div>
+        )}
+
+        {mode === "login" && (
+          <div className="auth__recovery-hint text-subtle text-xs text-left">
+            <p>
+              Forgot your master password? It cannot be reset. Without it, your
+              encrypted vault cannot be unlocked not even by us.
+            </p>
+          </div>
+        )}
+
         <div className="flex items-center gap-2 text-subtle text-xs text-left">
           <ShieldOutlinedIcon style={{ fontSize: "14px" }} />
-          <span>Master password stays on your device. Vault secrets are zero-knowledge encrypted.</span>
+          <span>
+            Your master password stays on this device. Vault secrets are
+            encrypted before they leave your browser.
+          </span>
         </div>
 
         <button type="submit" className="auth_btn" disabled={isSubmitting}>

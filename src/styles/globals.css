@@ -811,6 +811,49 @@ svg {
   color: #93b4ff;
 }
 
+.auth__recovery-notice {
+  text-align: left;
+  padding: 12px 14px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(251, 191, 36, 0.28);
+  background: rgba(251, 191, 36, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.auth__recovery-notice__title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #fbbf24;
+}
+
+.auth__recovery-notice__body {
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: rgba(220, 215, 201, 0.78);
+}
+
+.auth__acknowledge {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: rgba(220, 215, 201, 0.9);
+  cursor: pointer;
+}
+
+.auth__acknowledge input {
+  margin-top: 3px;
+  flex-shrink: 0;
+  accent-color: #fbbf24;
+}
+
+.auth__recovery-hint {
+  line-height: 1.45;
+}
+
 /* Profile */
 .user__avatar {
   border-radius: 50%;

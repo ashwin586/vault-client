@@ -495,7 +495,8 @@ const App = () => {
                       Account Credentials
                     </span>
                     <p className="settings-form-section__description">
-                      Change your password only after confirming the current one.
+                      Choose a strong master password and keep it safe. It
+                      cannot be recovered if forgotten.
                     </p>
                   </div>
 
@@ -676,6 +677,41 @@ const App = () => {
             </div>
           </section>
         </div>
+
+        <section className="glossy_container settings-card">
+          <div className="settings-card__header">
+            <div className="settings-card__title-group">
+              <h2 className="settings-card__title">
+                Master password &amp; zero-knowledge
+              </h2>
+              <p className="settings-card__description">
+                Why your vault stays private—and why we cannot recover your
+                password.
+              </p>
+            </div>
+            <LockClockOutlinedIcon className="text-white/30" />
+          </div>
+
+          <div className="settings-stack">
+            <div className="settings-meta-card">
+              <p className="settings-meta-card__label">How encryption works</p>
+              <p className="settings-meta-card__hint" style={{ marginTop: 6 }}>
+                Your vault is encrypted on this device with a key derived from
+                your master password. Only ciphertext is stored on the server.
+                We never receive your master password or vault key.
+              </p>
+            </div>
+            <div className="settings-meta-card">
+              <p className="settings-meta-card__label">No password recovery</p>
+              <p className="settings-meta-card__hint" style={{ marginTop: 6 }}>
+                Because the encryption key comes from your master password,
+                there is no reset or recovery path. If you forget it, your
+                encrypted vault cannot be unlocked—not by you, and not by us.
+                Store your master password safely.
+              </p>
+            </div>
+          </div>
+        </section>
 
         <div className="settings-grid">
           <section className="glossy_container settings-card">
