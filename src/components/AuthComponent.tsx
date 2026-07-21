@@ -71,7 +71,7 @@ const AuthComponent: React.FC<AuthComponentProps> = ({
 
         <div className="flex items-center gap-2 text-subtle text-xs text-left">
           <ShieldOutlinedIcon style={{ fontSize: "14px" }} />
-          <span>Credentials are encrypted in transit and at rest.</span>
+          <span>Master password stays on your device. Vault secrets are zero-knowledge encrypted.</span>
         </div>
 
         <button type="submit" className="auth_btn" disabled={isSubmitting}>

@@ -9,6 +9,8 @@ import useAuthRedirect from "@/hooks/useAuthRedirect";
 import { unlockVaultSession } from "@/hooks/useVaultSessionLock";
 import AppLayout from "@/components/layout/AppLayout";
 import PageLoader from "@/components/layout/PageLoader";
+import { deriveKeys } from "@/utils/vaultCrypto";
+import { setVaultKey } from "@/utils/vaultKeyStore";
 
 const App = () => {
   const router = useRouter();
@@ -17,11 +19,26 @@ const App = () => {
 
   const onSubmit: SubmitHandler<authInterface> = async (data) => {
     try {
-      const response = await axios.post("/login", data);
+      const saltResponse = await axios.get("/auth/salt", {
+        params: { email: data.email },
+      });
+      const salt = saltResponse?.data?.salt;
+      if (!salt) {
+        showToast("Unable to unlock vault for this account", "error");
+        return;
+      }
+
+      const { vaultKey, authHash } = await deriveKeys(data.password, salt);
+      const response = await axios.post("/login", {
+        email: data.email,
+        password: authHash,
+      });
+
       if (response.status === 200) {
         const accessToken = response?.data?.token;
         const message: string = response?.data?.message;
         localStorage.setItem("access-token", accessToken);
+        setVaultKey(vaultKey);
         unlockVaultSession();
         showToast(message, "success");
         setTimeout(() => {

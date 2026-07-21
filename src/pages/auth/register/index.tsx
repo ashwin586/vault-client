@@ -9,6 +9,7 @@ import { AxiosError } from "axios";
 import useAuthRedirect from "@/hooks/useAuthRedirect";
 import AppLayout from "@/components/layout/AppLayout";
 import PageLoader from "@/components/layout/PageLoader";
+import { deriveKeys, generateSalt } from "@/utils/vaultCrypto";
 
 const App = () => {
   const router = useRouter();
@@ -17,7 +18,13 @@ const App = () => {
 
   const onSubmit: SubmitHandler<authInterface> = async (data) => {
     try {
-      const response = await axios.post("/register", data);
+      const vaultSalt = generateSalt();
+      const { authHash } = await deriveKeys(data.password, vaultSalt);
+      const response = await axios.post("/register", {
+        email: data.email,
+        password: authHash,
+        vaultSalt,
+      });
       if (response.status === 201) {
         showToast("Account created successfully. Please sign in.", "success");
         setTimeout(() => {

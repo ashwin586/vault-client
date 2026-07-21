@@ -25,6 +25,20 @@ import VaultPageSkeleton from "@/components/layout/VaultPageSkeleton";
 import { skeletonStyle } from "@/utils/muiStyles";
 import { calculateStrength } from "@/utils/passwordStrength";
 import { ROUTES } from "@/utils/routes";
+import {
+  decryptPassword,
+  encryptPassword,
+} from "@/utils/vaultCrypto";
+import { requireVaultKey } from "@/utils/vaultKeyStore";
+
+interface EncryptedCredential {
+  id: string;
+  name: string;
+  url: string;
+  userName: string;
+  password: string;
+  iv: string;
+}
 
 const App = () => {
   const [open, setOpen] = useState<boolean>(false);
@@ -43,15 +57,40 @@ const App = () => {
 
   useVaultSessionLock(settings.lockOnClose, settings.autoLockTimeout);
 
+  const decryptCredential = async (
+    entry: EncryptedCredential,
+  ): Promise<UserPasswords> => {
+    const vaultKey = requireVaultKey();
+    const plaintext = await decryptPassword(
+      entry.password,
+      entry.iv,
+      vaultKey,
+    );
+    return {
+      id: entry.id,
+      name: entry.name,
+      url: entry.url,
+      userName: entry.userName,
+      password: plaintext,
+    };
+  };
+
   const fetchCredentials = useCallback(async () => {
     setFetchError(null);
     try {
       const response = await axios.get("/profile/managePasswords");
-      const userPasswords = response?.data?.passwords;
-      setCredentials(userPasswords);
+      const encryptedPasswords = (response?.data?.passwords ||
+        []) as EncryptedCredential[];
+      const decrypted = await Promise.all(
+        encryptedPasswords.map((entry) => decryptCredential(entry)),
+      );
+      setCredentials(decrypted);
     } catch (error) {
       const err = error as AxiosError<{ message: string }>;
-      const message = err?.response?.data?.message || "Something went wrong";
+      const message =
+        err?.message?.includes("Vault is locked")
+          ? "Vault is locked. Sign in again to unlock."
+          : err?.response?.data?.message || "Something went wrong";
       setFetchError(message);
       showToast(message, "error");
     }
@@ -64,7 +103,11 @@ const App = () => {
   }, [allowRender, fetchCredentials]);
 
   useEffect(() => {
-    if (!settings.securityReminders || !credentials?.length || remindersShownRef.current) {
+    if (
+      !settings.securityReminders ||
+      !credentials?.length ||
+      remindersShownRef.current
+    ) {
       return;
     }
 
@@ -78,7 +121,9 @@ const App = () => {
       },
       {},
     );
-    const reusedCount = Object.values(passwordCounts).filter((count) => count > 1).length;
+    const reusedCount = Object.values(passwordCounts).filter(
+      (count) => count > 1,
+    ).length;
 
     if (weakCount > 0) {
       showToast(
@@ -106,20 +151,33 @@ const App = () => {
 
   const onSubmit: SubmitHandler<addPassword> = async (data) => {
     try {
+      const vaultKey = requireVaultKey();
+      const { ciphertext, iv } = await encryptPassword(data.password, vaultKey);
+      const payload = {
+        name: data.name,
+        url: data.url,
+        userName: data.userName,
+        password: ciphertext,
+        iv,
+      };
+
       if (!isEdit) {
-        const response = await axios.post("/profile/managePasswords", data);
+        const response = await axios.post("/profile/managePasswords", payload);
         if (response.status === 201) {
           showToast(response?.data?.message, "success");
-          setCredentials((prev) => [...(prev ?? []), response.data.newData]);
+          const encrypted = response.data.newData as EncryptedCredential;
+          const decrypted = await decryptCredential(encrypted);
+          setCredentials((prev) => [...(prev ?? []), decrypted]);
         }
       } else {
         const response = await axios.patch(
           `/profile/managePasswords/${selectedCredential?.id}`,
-          data,
+          payload,
         );
         if (response.status === 200) {
           showToast(response?.data?.message, "success");
-          const updatedData = response?.data?.updatedData;
+          const encrypted = response?.data?.updatedData as EncryptedCredential;
+          const updatedData = await decryptCredential(encrypted);
           setCredentials(
             credentials?.map((cred) =>
               cred?.id === updatedData?.id ? updatedData : cred,
@@ -191,15 +249,33 @@ const App = () => {
             creds.name || creds.url || creds.username || creds.password,
         );
         try {
+          const vaultKey = requireVaultKey();
+          const encryptedRows = await Promise.all(
+            filtered.map(async (entry) => {
+              const { ciphertext, iv } = await encryptPassword(
+                entry.password,
+                vaultKey,
+              );
+              return {
+                name: entry.name,
+                url: entry.url,
+                username: entry.username,
+                password: ciphertext,
+                iv,
+              };
+            }),
+          );
           const response = await axios.post("/profile/importCSV", {
-            csvData: filtered,
+            csvData: encryptedRows,
           });
           if (response.status === 200) {
             showToast(response.data.message, "success");
-            setCredentials((prev) => [
-              ...(prev ?? []),
-              ...response.data.newData,
-            ]);
+            const decryptedImports = await Promise.all(
+              (response.data.newData as EncryptedCredential[]).map((entry) =>
+                decryptCredential(entry),
+              ),
+            );
+            setCredentials((prev) => [...(prev ?? []), ...decryptedImports]);
           }
         } catch (error) {
           const err = error as AxiosError<{ message: string }>;
@@ -268,7 +344,7 @@ const App = () => {
               </p>
             </div>
             <span className="status-badge status-badge--success">
-              Encrypted storage
+              Zero-knowledge encryption
             </span>
           </div>
 

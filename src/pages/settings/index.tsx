@@ -47,6 +47,13 @@ import {
 } from "@/utils/passwordStrength";
 import { ROUTES } from "@/utils/routes";
 import { formatDateTime } from "@/utils/formatDateTime";
+import {
+  decryptPassword,
+  deriveKeys,
+  encryptPassword,
+  generateSalt,
+} from "@/utils/vaultCrypto";
+import { clearVaultKey, setVaultKey } from "@/utils/vaultKeyStore";
 
 const App = () => {
   const [isEdit, setIsEdit] = useState<boolean>(false);
@@ -159,17 +166,97 @@ const App = () => {
       return;
     }
 
-    if (data.currentPassword && data.newPassword) {
-      payload.currentPassword = data.currentPassword;
-      payload.newPassword = data.newPassword;
-    }
-
-    if (Object.keys(payload).length === 0) {
-      showToast("No changes to save", "info");
-      return;
-    }
-
     try {
+      if (data.currentPassword && data.newPassword) {
+        const saltResponse = await axios.get("/auth/salt", {
+          params: { email: data.email },
+        });
+        const currentSalt = saltResponse?.data?.salt;
+        if (!currentSalt) {
+          showToast("Unable to verify current password", "error");
+          return;
+        }
+
+        const currentKeys = await deriveKeys(
+          data.currentPassword,
+          currentSalt,
+        );
+        const newSalt = generateSalt();
+        const newKeys = await deriveKeys(data.newPassword, newSalt);
+
+        const vaultResponse = await axios.get("/profile/managePasswords");
+        const encryptedEntries = (vaultResponse?.data?.passwords || []) as Array<{
+          id: string;
+          name: string;
+          url: string;
+          userName: string;
+          password: string;
+          iv: string;
+        }>;
+
+        const reencryptedEntries = await Promise.all(
+          encryptedEntries.map(async (entry) => {
+            const plaintext = await decryptPassword(
+              entry.password,
+              entry.iv,
+              currentKeys.vaultKey,
+            );
+            const { ciphertext, iv } = await encryptPassword(
+              plaintext,
+              newKeys.vaultKey,
+            );
+            return {
+              id: entry.id,
+              name: entry.name,
+              url: entry.url,
+              userName: entry.userName,
+              password: ciphertext,
+              iv,
+            };
+          }),
+        );
+
+        payload.currentPassword = currentKeys.authHash;
+        payload.newPassword = newKeys.authHash;
+        payload.vaultSalt = newSalt;
+
+        const response = await axios.patch("/profile", {
+          ...payload,
+          ...(dirtyFields.name ? { name: data.name } : {}),
+        });
+        if (response.status !== 200) {
+          return;
+        }
+
+        for (const entry of reencryptedEntries) {
+          await axios.patch(`/profile/managePasswords/${entry.id}`, {
+            name: entry.name,
+            url: entry.url,
+            userName: entry.userName,
+            password: entry.password,
+            iv: entry.iv,
+          });
+        }
+
+        setVaultKey(newKeys.vaultKey);
+        showToast(response?.data?.message, "success");
+        if (data.name) {
+          setUserName(data.name);
+        }
+        setIsEdit(false);
+        reset({
+          ...data,
+          currentPassword: "",
+          newPassword: "",
+        });
+        return;
+      }
+
+      if (Object.keys(payload).length === 0) {
+        showToast("No changes to save", "info");
+        return;
+      }
+
       const response = await axios.patch("/profile", payload);
       if (response.status === 200) {
         showToast(response?.data?.message, "success");
@@ -254,6 +341,7 @@ const App = () => {
         "error",
       );
     } finally {
+      clearVaultKey();
       localStorage.removeItem("access-token");
       router.push("/home");
     }
@@ -541,7 +629,8 @@ const App = () => {
                   {securitySummary?.encryptionStatus || "Ready"}
                 </p>
                 <p className="settings-meta-card__hint">
-                  Vault credentials are encrypted at rest with AES.
+                  Vault secrets are encrypted on your device. The server never
+                  receives plaintext passwords or your vault key.
                 </p>
               </div>
               <div className="settings-meta-card">
@@ -561,12 +650,14 @@ const App = () => {
                     </span>
                   </div>
                 ) : (
-                  <p className="settings-meta-card__value">No saved passwords yet</p>
+                  <p className="settings-meta-card__value">
+                    Checked locally in your vault
+                  </p>
                 )}
                 {securitySummary && securitySummary.savedPasswordCount > 0 && (
                   <p className="settings-meta-card__hint">
-                    Based on {securitySummary.savedPasswordCount} saved credential
-                    {securitySummary.savedPasswordCount === 1 ? "" : "s"}.
+                    {securitySummary.savedPasswordCount} encrypted credential
+                    {securitySummary.savedPasswordCount === 1 ? "" : "s"} stored.
                   </p>
                 )}
               </div>
@@ -578,25 +669,9 @@ const App = () => {
                 ) : (
                   <span className="status-badge">Vault masking off</span>
                 )}
-                {securitySummary && securitySummary.weakPasswordCount > 0 && (
-                  <span className="status-badge status-badge--warning">
-                    {securitySummary.weakPasswordCount} weak password
-                    {securitySummary.weakPasswordCount === 1 ? "" : "s"}
-                  </span>
-                )}
-                {securitySummary && securitySummary.reusedPasswordCount > 0 && (
-                  <span className="status-badge status-badge--warning">
-                    Review reused passwords
-                  </span>
-                )}
-                {securitySummary &&
-                  securitySummary.savedPasswordCount > 0 &&
-                  securitySummary.weakPasswordCount === 0 &&
-                  securitySummary.reusedPasswordCount === 0 && (
-                    <span className="status-badge status-badge--success">
-                      Vault passwords look healthy
-                    </span>
-                  )}
+                <span className="status-badge status-badge--success">
+                  Zero-knowledge vault
+                </span>
               </div>
             </div>
           </section>

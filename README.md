@@ -13,6 +13,7 @@ A modern, secure password manager web application built with Next.js. Generate s
 - 📥 **CSV Import** — Import passwords from Chrome, Bitwarden, or any standard password manager export
 - 📤 **CSV Export** — Export your vault as a CSV file
 - 🔒 **JWT Authentication** — Secure login and registration with token expiry
+- 🛡️ **Zero-knowledge vault** — Encrypt/decrypt locally; server never sees plaintext vault secrets
 - 🎨 **Glassmorphic UI** — Dark theme with glassmorphic design throughout
 
 ## Tech Stack

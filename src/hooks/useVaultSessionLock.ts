@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useRouter } from "next/router";
+import { clearVaultKey } from "@/utils/vaultKeyStore";
 
 export const VAULT_LOCK_KEY = "vault-locked";
 
@@ -8,6 +9,7 @@ export const isVaultLocked = () =>
   sessionStorage.getItem(VAULT_LOCK_KEY) === "1";
 
 export const lockVaultSession = () => {
+  clearVaultKey();
   sessionStorage.setItem(VAULT_LOCK_KEY, "1");
 };
 
@@ -53,6 +55,7 @@ const useVaultSessionLock = (
       idleTimer = setTimeout(() => {
         lockVaultSession();
         localStorage.removeItem("access-token");
+        clearVaultKey();
         router.push("/home");
       }, autoLockTimeoutMinutes * 60 * 1000);
     };

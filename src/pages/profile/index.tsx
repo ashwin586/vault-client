@@ -25,6 +25,7 @@ import { isTokenValid } from "@/utils/auth";
 import { ROUTES } from "@/utils/routes";
 import { formatDateTime, getSecurityPosture } from "@/utils/formatDateTime";
 import { unlockVaultSession } from "@/hooks/useVaultSessionLock";
+import { clearVaultKey } from "@/utils/vaultKeyStore";
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -104,6 +105,7 @@ const App = () => {
 
   const handleLogout = () => {
     unlockVaultSession();
+    clearVaultKey();
     localStorage.removeItem("access-token");
     router.push("/home");
   };

@@ -22,7 +22,7 @@ export interface AddPasswordProps {
   open: boolean;
   handleClose: () => void;
   submitHandler: SubmitHandler<addPassword>;
-  selectedCredential?: addPassword | null
+  selectedCredential?: addPassword | null;
 }
 
 export interface TokenProps {
@@ -49,6 +49,7 @@ export interface ProfileInfo {
   email: string;
   currentPassword?: string;
   newPassword?: string;
+  vaultSalt?: string;
 }
 
 export interface ApiError {
@@ -61,6 +62,7 @@ export interface UserPasswords {
   url: string;
   userName: string;
   password: string;
+  iv?: string;
   handleEditButton?: () => void;
   handleDeleteButton?: () => void;
 }
@@ -70,6 +72,7 @@ export interface CSVData {
   url: string;
   username: string;
   password: string;
+  iv?: string;
 }
 
 export interface PasswordCardProps {

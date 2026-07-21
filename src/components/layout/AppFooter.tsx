@@ -28,7 +28,7 @@ const AppFooter: React.FC = () => {
             <span className="app-footer__name">Vault</span>
           </div>
           <p className="app-footer__tagline">
-            Secure password generation and encrypted vault management.
+            Zero-knowledge password generation and vault management.
           </p>
         </div>
 

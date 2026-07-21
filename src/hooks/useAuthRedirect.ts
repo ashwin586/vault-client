@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
 import { isTokenValid } from "@/utils/auth";
+import { getVaultKey, clearVaultKey } from "@/utils/vaultKeyStore";
 
 const useAuthRedirect = () => {
   const router = useRouter();
@@ -8,10 +9,13 @@ const useAuthRedirect = () => {
   const [isChecking, setIsChecking] = useState(true);
 
   useEffect(() => {
-    if (isTokenValid()) {
+    if (isTokenValid() && getVaultKey()) {
       router.push("/home");
     } else {
-      localStorage.removeItem("access-token");
+      if (!getVaultKey()) {
+        clearVaultKey();
+        localStorage.removeItem("access-token");
+      }
       setAllowRender(true);
     }
     setIsChecking(false);
