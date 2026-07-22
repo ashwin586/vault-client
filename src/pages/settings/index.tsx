@@ -53,7 +53,8 @@ import {
   encryptPassword,
   generateSalt,
 } from "@/utils/vaultCrypto";
-import { clearVaultKey, setVaultKey } from "@/utils/vaultKeyStore";
+import { setVaultKey } from "@/utils/vaultKeyStore";
+import { logoutSession } from "@/utils/logout";
 
 const App = () => {
   const [isEdit, setIsEdit] = useState<boolean>(false);
@@ -341,8 +342,7 @@ const App = () => {
         "error",
       );
     } finally {
-      clearVaultKey();
-      localStorage.removeItem("access-token");
+      await logoutSession();
       router.push("/home");
     }
   };

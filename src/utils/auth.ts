@@ -1,22 +1,19 @@
-import { jwtDecode } from "jwt-decode";
-import { TokenProps } from "@/types/interface";
+const AUTH_SESSION_KEY = "vault-auth-session";
+
+/** Client-side session marker only — JWT lives in an httpOnly cookie. */
+export const markAuthenticated = () => {
+  if (typeof window === "undefined") return;
+  sessionStorage.setItem(AUTH_SESSION_KEY, "1");
+};
+
+export const clearAuthSession = () => {
+  if (typeof window === "undefined") return;
+  sessionStorage.removeItem(AUTH_SESSION_KEY);
+  // Clear legacy localStorage token if present from older builds.
+  localStorage.removeItem("access-token");
+};
 
 export const isTokenValid = (): boolean => {
-  const token = localStorage.getItem("access-token");
-
-  if (!token) return false;
-
-  try {
-    const decoded: TokenProps = jwtDecode(token);
-
-    if (decoded.exp < Date.now() / 1000) {
-      localStorage.removeItem("access-token");
-      return false;
-    }
-
-    return true;
-  } catch {
-    localStorage.removeItem("access-token");
-    return false;
-  }
+  if (typeof window === "undefined") return false;
+  return sessionStorage.getItem(AUTH_SESSION_KEY) === "1";
 };

@@ -25,7 +25,7 @@ import { isTokenValid } from "@/utils/auth";
 import { ROUTES } from "@/utils/routes";
 import { formatDateTime, getSecurityPosture } from "@/utils/formatDateTime";
 import { unlockVaultSession } from "@/hooks/useVaultSessionLock";
-import { clearVaultKey } from "@/utils/vaultKeyStore";
+import { logoutSession } from "@/utils/logout";
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -103,10 +103,9 @@ const App = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     unlockVaultSession();
-    clearVaultKey();
-    localStorage.removeItem("access-token");
+    await logoutSession();
     router.push("/home");
   };
 

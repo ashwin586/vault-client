@@ -1,4 +1,6 @@
 import Axios from "axios";
+import { clearAuthSession } from "@/utils/auth";
+import { clearVaultKey } from "@/utils/vaultKeyStore";
 
 const axios = Axios.create({
   baseURL: process.env.NEXT_PUBLIC_API_BASE_DEV_URL,
@@ -8,15 +10,15 @@ const axios = Axios.create({
   },
 });
 
-axios.interceptors.request.use(
-  (config) => {
-    const accessToken = localStorage.getItem("access-token");
-    if (accessToken) {
-      config.headers.Authorization = `Bearer ${accessToken}`;
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error?.response?.status === 401) {
+      clearAuthSession();
+      clearVaultKey();
     }
-    return config;
+    return Promise.reject(error);
   },
-  (error) => Promise.reject(error)
 );
 
 export default axios;

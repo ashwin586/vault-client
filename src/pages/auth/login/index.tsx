@@ -11,6 +11,7 @@ import AppLayout from "@/components/layout/AppLayout";
 import PageLoader from "@/components/layout/PageLoader";
 import { deriveKeys } from "@/utils/vaultCrypto";
 import { setVaultKey } from "@/utils/vaultKeyStore";
+import { markAuthenticated } from "@/utils/auth";
 
 const App = () => {
   const router = useRouter();
@@ -35,9 +36,8 @@ const App = () => {
       });
 
       if (response.status === 200) {
-        const accessToken = response?.data?.token;
         const message: string = response?.data?.message;
-        localStorage.setItem("access-token", accessToken);
+        markAuthenticated();
         setVaultKey(vaultKey);
         unlockVaultSession();
         showToast(message, "success");

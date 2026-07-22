@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
-import { isTokenValid } from "@/utils/auth";
+import { clearAuthSession, isTokenValid } from "@/utils/auth";
 import { isVaultLocked } from "@/hooks/useVaultSessionLock";
 import { clearVaultKey, getVaultKey } from "@/utils/vaultKeyStore";
 
@@ -12,7 +12,7 @@ const useProtectedRoute = () => {
   useEffect(() => {
     if (isVaultLocked() || !getVaultKey()) {
       clearVaultKey();
-      localStorage.removeItem("access-token");
+      clearAuthSession();
       router.push("/home");
       setIsChecking(false);
       return;
@@ -21,7 +21,7 @@ const useProtectedRoute = () => {
     if (isTokenValid()) {
       setAllowRender(true);
     } else {
-      localStorage.removeItem("access-token");
+      clearAuthSession();
       clearVaultKey();
       router.push("/home");
     }

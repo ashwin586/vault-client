@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/router";
 import { clearVaultKey } from "@/utils/vaultKeyStore";
+import { logoutSession } from "@/utils/logout";
 
 export const VAULT_LOCK_KEY = "vault-locked";
 
@@ -52,15 +53,20 @@ const useVaultSessionLock = (
 
     const resetIdleTimer = () => {
       if (idleTimer) clearTimeout(idleTimer);
-      idleTimer = setTimeout(() => {
+      idleTimer = setTimeout(async () => {
         lockVaultSession();
-        localStorage.removeItem("access-token");
-        clearVaultKey();
+        await logoutSession();
         router.push("/home");
       }, autoLockTimeoutMinutes * 60 * 1000);
     };
 
-    const activityEvents = ["mousemove", "keydown", "click", "scroll", "touchstart"];
+    const activityEvents = [
+      "mousemove",
+      "keydown",
+      "click",
+      "scroll",
+      "touchstart",
+    ];
     activityEvents.forEach((eventName) =>
       window.addEventListener(eventName, resetIdleTimer),
     );

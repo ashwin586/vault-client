@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/router";
-import { isTokenValid } from "@/utils/auth";
+import { clearAuthSession, isTokenValid } from "@/utils/auth";
 import { getVaultKey, clearVaultKey } from "@/utils/vaultKeyStore";
 
 const useAuthRedirect = () => {
@@ -14,7 +14,7 @@ const useAuthRedirect = () => {
     } else {
       if (!getVaultKey()) {
         clearVaultKey();
-        localStorage.removeItem("access-token");
+        clearAuthSession();
       }
       setAllowRender(true);
     }
