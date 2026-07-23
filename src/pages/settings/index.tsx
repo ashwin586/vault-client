@@ -53,8 +53,10 @@ import {
   encryptPassword,
   generateSalt,
 } from "@/utils/vaultCrypto";
-import { setVaultKey } from "@/utils/vaultKeyStore";
+import { clearVaultKey } from "@/utils/vaultKeyStore";
 import { logoutSession } from "@/utils/logout";
+import { clearAuthSession } from "@/utils/auth";
+import { unlockVaultSession } from "@/hooks/useVaultSessionLock";
 
 const App = () => {
   const [isEdit, setIsEdit] = useState<boolean>(false);
@@ -217,18 +219,7 @@ const App = () => {
           }),
         );
 
-        payload.currentPassword = currentKeys.authHash;
-        payload.newPassword = newKeys.authHash;
-        payload.vaultSalt = newSalt;
-
-        const response = await axios.patch("/profile", {
-          ...payload,
-          ...(dirtyFields.name ? { name: data.name } : {}),
-        });
-        if (response.status !== 200) {
-          return;
-        }
-
+        // Re-encrypt vault while the current session is still valid.
         for (const entry of reencryptedEntries) {
           await axios.patch(`/profile/managePasswords/${entry.id}`, {
             name: entry.name,
@@ -239,17 +230,28 @@ const App = () => {
           });
         }
 
-        setVaultKey(newKeys.vaultKey);
-        showToast(response?.data?.message, "success");
-        if (data.name) {
-          setUserName(data.name);
-        }
-        setIsEdit(false);
-        reset({
-          ...data,
-          currentPassword: "",
-          newPassword: "",
+        payload.currentPassword = currentKeys.authHash;
+        payload.newPassword = newKeys.authHash;
+        payload.vaultSalt = newSalt;
+
+        // Password change revokes all sessions server-side.
+        const response = await axios.patch("/profile", {
+          ...payload,
+          ...(dirtyFields.name ? { name: data.name } : {}),
         });
+        if (response.status !== 200) {
+          return;
+        }
+
+        clearVaultKey();
+        clearAuthSession();
+        unlockVaultSession();
+        showToast(
+          response?.data?.message ||
+            "Password updated. Please sign in with your new master password.",
+          "success",
+        );
+        router.push("/auth/login");
         return;
       }
 
